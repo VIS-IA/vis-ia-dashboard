@@ -285,7 +285,7 @@ export default function VisIaPanelInicio({ data: d }: { data: DashboardData }) {
                 </h2>
               </div>
               <Link
-                href="/panel/vis-score"
+                href="/panel/comparacion"
                 className="text-xs text-blue-600 font-medium flex items-center gap-1"
               >
                 Ver comparación completa <ChevronRight size={13} />
