@@ -38,6 +38,35 @@ export interface DashboardAction {
   prioridad: "Alta" | "Media" | "Baja";
 }
 
+export interface ReputationDetail {
+  avgRating: number;
+  avgRatingPrevious: number;
+  totalReviews: number;
+  totalReviewsPrevious: number;
+  positiveCount: number;
+  neutralCount: number;
+  negativeCount: number;
+  responseRatePercent: number;
+  unrespondedNegative: number;
+}
+
+export interface ExperienceDetail {
+  avgResponseTimeLabel: string;
+  avgResponseTimePreviousLabel: string;
+  satisfactionScore: number;
+  satisfactionPrevious: number;
+  totalInteractions: number;
+  totalInteractionsPrevious: number;
+}
+
+export interface Competitor {
+  name: string;
+  rating: number;
+  reviewCount: number;
+  notes: string | null;
+  isYou: boolean;
+}
+
 export interface DashboardData {
   business: {
     name: string;

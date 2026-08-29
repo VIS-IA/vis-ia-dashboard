@@ -1,5 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import type { DashboardData } from "@/lib/types";
+import type {
+  DashboardData,
+  ReputationDetail,
+  ExperienceDetail,
+  Competitor,
+} from "@/lib/types";
 
 /**
  * Loads the signed-in user's business + their most recent report,
@@ -206,4 +211,124 @@ async function loadReportHistory(): Promise<ReportSummary[]> {
     visScoreCurrent: r.vis_score_current,
     visScoreStatus: r.vis_score_status,
   }));
+}
+
+/** Shared helper: returns the current user's latest report id, or null. */
+async function getLatestReportId(): Promise<string | null> {
+  const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: client } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+  if (!client) return null;
+
+  const { data: report } = await supabase
+    .from("reports")
+    .select("id")
+    .eq("client_id", client.id)
+    .order("analysis_date", { ascending: false })
+    .limit(1)
+    .single();
+
+  return report?.id ?? null;
+}
+
+/**
+ * Reputation detail for the "Reputación" page. Returns null if no
+ * reputation_details row has been loaded for the latest report yet.
+ */
+export async function getReputationDetail(): Promise<ReputationDetail | null> {
+  try {
+    const reportId = await getLatestReportId();
+    if (!reportId) return null;
+
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("reputation_details")
+      .select("*")
+      .eq("report_id", reportId)
+      .single();
+
+    if (!data) return null;
+
+    return {
+      avgRating: data.avg_rating,
+      avgRatingPrevious: data.avg_rating_previous,
+      totalReviews: data.total_reviews,
+      totalReviewsPrevious: data.total_reviews_previous,
+      positiveCount: data.positive_count,
+      neutralCount: data.neutral_count,
+      negativeCount: data.negative_count,
+      responseRatePercent: data.response_rate_percent,
+      unrespondedNegative: data.unresponded_negative,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Customer experience detail for the "Experiencia del Cliente" page.
+ * Returns null if no experience_details row exists yet.
+ */
+export async function getExperienceDetail(): Promise<ExperienceDetail | null> {
+  try {
+    const reportId = await getLatestReportId();
+    if (!reportId) return null;
+
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("experience_details")
+      .select("*")
+      .eq("report_id", reportId)
+      .single();
+
+    if (!data) return null;
+
+    return {
+      avgResponseTimeLabel: data.avg_response_time_label,
+      avgResponseTimePreviousLabel: data.avg_response_time_previous_label,
+      satisfactionScore: data.satisfaction_score,
+      satisfactionPrevious: data.satisfaction_previous,
+      totalInteractions: data.total_interactions,
+      totalInteractionsPrevious: data.total_interactions_previous,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Competitor comparison rows for the "Competencia" page. Returns an
+ * empty array if no competitors have been loaded yet.
+ */
+export async function getCompetitors(): Promise<Competitor[]> {
+  try {
+    const reportId = await getLatestReportId();
+    if (!reportId) return [];
+
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("competitors")
+      .select("*")
+      .eq("report_id", reportId)
+      .order("sort_order", { ascending: true });
+
+    return (data ?? []).map((c) => ({
+      name: c.name,
+      rating: c.rating,
+      reviewCount: c.review_count,
+      notes: c.notes,
+      isYou: c.is_you,
+    }));
+  } catch {
+    return [];
+  }
 }
