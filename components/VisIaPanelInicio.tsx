@@ -1,17 +1,14 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import {
-  Home,
   Star,
   Sparkles,
   MessageSquare,
-  BarChart3,
-  Users,
   TrendingUp,
   CheckSquare,
   FileText,
-  UserCircle,
   Bell,
   ArrowUp,
   ChevronRight,
@@ -19,8 +16,10 @@ import {
   Download,
   ExternalLink,
   Calendar,
+  Users,
 } from "lucide-react";
 import { ICON_MAP } from "@/lib/icons";
+import { PanelSidebar } from "@/components/PanelLayout";
 import type { DashboardData } from "@/lib/types";
 
 /**
@@ -31,19 +30,6 @@ import type { DashboardData } from "@/lib/types";
  * (fetched server-side from Supabase for the signed-in client) instead
  * of a hardcoded DEMO_DATA object. JSX/styling is untouched.
  */
-
-const navItems = [
-  { icon: Home, label: "Inicio", active: true },
-  { icon: BarChart3, label: "VIS Score" },
-  { icon: Star, label: "Pérdida Invisible" },
-  { icon: Sparkles, label: "Valor Oculto" },
-  { icon: Star, label: "Reputación" },
-  { icon: Users, label: "Experiencia del Cliente" },
-  { icon: BarChart3, label: "Competencia" },
-  { icon: CheckSquare, label: "Plan de Acción" },
-  { icon: FileText, label: "Reportes" },
-  { icon: UserCircle, label: "Mi Cuenta" },
-];
 
 const accentClasses: Record<string, string> = {
   blue: "text-blue-600",
@@ -85,61 +71,50 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-export default function VisIaPanelInicio({
-  data: d,
-  onSignOut,
-}: {
-  data: DashboardData;
-  onSignOut?: () => void;
-}) {
+export default function VisIaPanelInicio({ data: d }: { data: DashboardData }) {
+  function downloadReport() {
+    const lines = [
+      `VIS IA — Reporte de ${d.business.name}`,
+      `${d.business.location}  •  ID: ${d.business.visId}`,
+      `Último análisis: ${d.lastAnalysis}`,
+      "",
+      `VIS SCORE: ${d.visScore.current}/100 (${d.visScore.status})`,
+      `Anterior: ${d.visScore.previous}/100  •  Cambio: ${d.visScore.delta > 0 ? "+" : ""}${d.visScore.delta}`,
+      `${d.visScore.statusNote}`,
+      "",
+      `ACCIÓN RECOMENDADA #1: ${d.accionRecomendada.titulo}`,
+      d.accionRecomendada.motivo,
+      "",
+      "MÉTRICAS:",
+      ...d.metrics.map(
+        (m) => `- ${m.label}: ${m.value}${m.suffix ?? ""} (${m.previous}, ${m.delta})`
+      ),
+      "",
+      "PÉRDIDAS INVISIBLES:",
+      ...d.perdidas.map((p) => `- [${p.impacto}] ${p.titulo}: ${p.descripcion}`),
+      "",
+      "OPORTUNIDADES DE VALOR OCULTO:",
+      ...d.oportunidades.map((o) => `- [${o.potencial}] ${o.titulo}: ${o.descripcion}`),
+      "",
+      "PLAN DE ACCIÓN:",
+      ...d.acciones.map((a, i) => `${i + 1}. [${a.prioridad}] ${a.texto}`),
+    ];
+
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `VIS-IA-reporte-${d.business.visId}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="min-h-screen w-full bg-slate-50 flex text-slate-800">
       {/* Sidebar */}
-      <aside className="w-64 shrink-0 bg-[#0b1220] text-slate-300 flex flex-col justify-between">
-        <div>
-          <div className="px-6 py-6 border-b border-white/10">
-            <div className="flex items-baseline gap-1">
-              <span className="text-white font-bold text-xl tracking-tight">VIS</span>
-              <span className="text-blue-400 font-bold text-xl tracking-tight">IA</span>
-            </div>
-            <div className="text-[10px] tracking-[0.2em] text-slate-500 mt-0.5">
-              INTELLIGENCE
-            </div>
-          </div>
-
-          <nav className="px-3 py-4 space-y-1">
-            {navItems.map(({ icon: Icon, label, active }) => (
-              <button
-                key={label}
-                onClick={label === "Mi Cuenta" ? onSignOut : undefined}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                  active
-                    ? "bg-blue-600 text-white font-medium"
-                    : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
-                }`}
-              >
-                <Icon size={18} />
-                {label}
-                {label === "Mi Cuenta" && (
-                  <span className="ml-auto text-[10px] text-slate-500">
-                    Salir
-                  </span>
-                )}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        <div className="p-4 space-y-3">
-          <div className="bg-white/5 rounded-xl p-4">
-            <p className="text-sm font-medium text-slate-200">¿Necesitas ayuda?</p>
-            <p className="text-xs text-slate-500 mt-1">Escríbenos por WhatsApp</p>
-          </div>
-          <button className="w-full flex items-center justify-center gap-2 text-sm text-slate-300 border border-white/10 rounded-lg py-2.5 hover:bg-white/5">
-            Soporte VIS IA
-          </button>
-        </div>
-      </aside>
+      <PanelSidebar />
 
       {/* Main content */}
       <main className="flex-1 min-w-0">
@@ -159,9 +134,9 @@ export default function VisIaPanelInicio({
               <p className="text-sm text-slate-500">
                 {d.business.location} &nbsp;•&nbsp; ID: {d.business.visId}
               </p>
-              <button className="text-xs text-blue-600 font-medium flex items-center gap-1 mt-0.5">
-                Ver perfil público <ExternalLink size={11} />
-              </button>
+              <span className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                Perfil público — próximamente <ExternalLink size={11} />
+              </span>
             </div>
           </div>
 
@@ -170,7 +145,10 @@ export default function VisIaPanelInicio({
               <p className="text-xs text-slate-400">Último análisis</p>
               <p className="text-sm font-medium text-slate-700">{d.lastAnalysis}</p>
             </div>
-            <button className="flex items-center gap-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg px-4 py-2 hover:bg-slate-50">
+            <button
+              onClick={downloadReport}
+              className="flex items-center gap-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg px-4 py-2 hover:bg-slate-50"
+            >
               <Download size={15} /> Descargar reporte
             </button>
             <button className="relative w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
@@ -283,9 +261,12 @@ export default function VisIaPanelInicio({
                 </p>
                 <p className="text-sm text-slate-600">{d.accionRecomendada.motivo}</p>
               </div>
-              <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg py-2.5 flex items-center justify-center gap-1">
+              <Link
+                href="/panel/plan-accion"
+                className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg py-2.5 flex items-center justify-center gap-1"
+              >
                 Ver detalle y plan <ChevronRight size={15} />
-              </button>
+              </Link>
             </div>
           </section>
 
@@ -298,9 +279,12 @@ export default function VisIaPanelInicio({
                   ¿Qué cambió desde tu último análisis?
                 </h2>
               </div>
-              <button className="text-xs text-blue-600 font-medium flex items-center gap-1">
+              <Link
+                href="/panel/vis-score"
+                className="text-xs text-blue-600 font-medium flex items-center gap-1"
+              >
                 Ver comparación completa <ChevronRight size={13} />
-              </button>
+              </Link>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -367,9 +351,12 @@ export default function VisIaPanelInicio({
                   );
                 })}
               </div>
-              <button className="mt-5 text-sm text-red-600 font-medium flex items-center gap-1">
+              <Link
+                href="/panel/perdidas"
+                className="mt-5 text-sm text-red-600 font-medium flex items-center gap-1"
+              >
                 Ver todas las pérdidas <ChevronRight size={14} />
-              </button>
+              </Link>
             </div>
 
             {/* Oportunidades de valor oculto */}
@@ -407,9 +394,12 @@ export default function VisIaPanelInicio({
                   );
                 })}
               </div>
-              <button className="mt-5 text-sm text-emerald-600 font-medium flex items-center gap-1">
+              <Link
+                href="/panel/oportunidades"
+                className="mt-5 text-sm text-emerald-600 font-medium flex items-center gap-1"
+              >
                 Ver todas las oportunidades <ChevronRight size={14} />
-              </button>
+              </Link>
             </div>
 
             {/* Próximas acciones prioritarias */}
@@ -428,9 +418,12 @@ export default function VisIaPanelInicio({
                   </div>
                 ))}
               </div>
-              <button className="mt-5 text-sm text-blue-600 font-medium flex items-center gap-1">
+              <Link
+                href="/panel/plan-accion"
+                className="mt-5 text-sm text-blue-600 font-medium flex items-center gap-1"
+              >
                 Ver plan de acción completo <ChevronRight size={14} />
-              </button>
+              </Link>
             </div>
           </section>
 
@@ -459,10 +452,13 @@ export default function VisIaPanelInicio({
                   {d.nextAnalysis}
                 </p>
               </div>
-              <button className="flex items-center gap-2 text-sm font-medium text-blue-700 bg-white border border-blue-200 rounded-lg px-4 py-2.5">
+              <Link
+                href="/panel/reportes"
+                className="flex items-center gap-2 text-sm font-medium text-blue-700 bg-white border border-blue-200 rounded-lg px-4 py-2.5"
+              >
                 <FileText size={15} /> Ver todos los reportes{" "}
                 <ChevronRight size={14} />
-              </button>
+              </Link>
             </div>
           </section>
         </div>

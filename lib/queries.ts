@@ -126,3 +126,50 @@ export async function getDashboardData(): Promise<DashboardData | null> {
 
   return data;
 }
+
+export interface ReportSummary {
+  id: string;
+  analysisDate: string;
+  visScoreCurrent: number;
+  visScoreStatus: string;
+}
+
+/**
+ * Loads every report ever published for the signed-in user's business,
+ * most recent first — used by the "Reportes" page and "Ver todos los
+ * reportes" button.
+ */
+export async function getReportHistory(): Promise<ReportSummary[]> {
+  const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const { data: client } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!client) return [];
+
+  const { data: reports } = await supabase
+    .from("reports")
+    .select("id, analysis_date, vis_score_current, vis_score_status")
+    .eq("client_id", client.id)
+    .order("analysis_date", { ascending: false });
+
+  return (reports ?? []).map((r) => ({
+    id: r.id,
+    analysisDate: new Date(r.analysis_date).toLocaleDateString("es-ES", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }),
+    visScoreCurrent: r.vis_score_current,
+    visScoreStatus: r.vis_score_status,
+  }));
+}

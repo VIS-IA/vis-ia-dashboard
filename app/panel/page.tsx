@@ -1,5 +1,5 @@
 import { getDashboardData } from "@/lib/queries";
-import PanelShell from "@/components/PanelShell";
+import VisIaPanelInicio from "@/components/VisIaPanelInicio";
 
 // Always fetch fresh data — this is a live client report, not static content.
 export const dynamic = "force-dynamic";
@@ -24,5 +24,5 @@ export default async function PanelPage() {
     );
   }
 
-  return <PanelShell data={data} />;
+  return <VisIaPanelInicio data={data} />;
 }
