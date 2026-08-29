@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Shield } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,16 +38,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <Shield className="text-blue-600" size={26} />
-          <div className="flex items-baseline gap-1">
-            <span className="text-slate-900 font-bold text-xl tracking-tight">
-              VIS
-            </span>
-            <span className="text-blue-600 font-bold text-xl tracking-tight">
-              IA
-            </span>
-          </div>
+        <div className="flex items-center justify-center mb-6">
+          <Image
+            src="/logo-vis-ia.png"
+            alt="VIS IA Federal Consulting"
+            width={90}
+            height={90}
+            priority
+          />
         </div>
 
         <form

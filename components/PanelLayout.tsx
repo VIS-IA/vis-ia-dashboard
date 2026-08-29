@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Home,
@@ -12,6 +13,13 @@ import {
   FileText,
   UserCircle,
 } from "lucide-react";
+
+// Número de WhatsApp del negocio, en formato internacional sin signos:
+// +1 678 400 7344 -> 16784007344
+const WHATSAPP_NUMBER = "16784007344";
+const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+  "Hola, necesito ayuda con mi panel VIS IA"
+)}`;
 
 export const NAV_ITEMS = [
   { icon: Home, label: "Inicio", href: "/panel" },
@@ -32,13 +40,16 @@ export function PanelSidebar() {
   return (
     <aside className="w-64 shrink-0 bg-[#0b1220] text-slate-300 flex flex-col justify-between">
       <div>
-        <div className="px-6 py-6 border-b border-white/10">
-          <div className="flex items-baseline gap-1">
-            <span className="text-white font-bold text-xl tracking-tight">VIS</span>
-            <span className="text-blue-400 font-bold text-xl tracking-tight">IA</span>
-          </div>
-          <div className="text-[10px] tracking-[0.2em] text-slate-500 mt-0.5">
-            INTELLIGENCE
+        <div className="px-6 py-6 border-b border-white/10 flex items-center justify-center">
+          <div className="bg-white rounded-xl p-2">
+            <Image
+              src="/logo-vis-ia.png"
+              alt="VIS IA Federal Consulting"
+              width={140}
+              height={140}
+              className="w-full h-auto"
+              priority
+            />
           </div>
         </div>
 
@@ -68,9 +79,14 @@ export function PanelSidebar() {
           <p className="text-sm font-medium text-slate-200">¿Necesitas ayuda?</p>
           <p className="text-xs text-slate-500 mt-1">Escríbenos por WhatsApp</p>
         </div>
-        <button className="w-full flex items-center justify-center gap-2 text-sm text-slate-300 border border-white/10 rounded-lg py-2.5 hover:bg-white/5">
+        <a
+          href={WHATSAPP_LINK}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full flex items-center justify-center gap-2 text-sm text-slate-300 border border-white/10 rounded-lg py-2.5 hover:bg-white/5"
+        >
           Soporte VIS IA
-        </button>
+        </a>
       </div>
     </aside>
   );
