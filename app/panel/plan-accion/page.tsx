@@ -36,25 +36,35 @@ export default async function PlanAccionPage() {
   return (
     <PanelLayout
       title="Plan de Acción"
-      subtitle="Próximos pasos recomendados por VIS IA, en orden de prioridad"
+      subtitle="Próximos pasos recomendados por VIS IA, en orden de prioridad, con el detalle de cada tema"
     >
       {data.acciones.length === 0 ? (
         <p className="text-sm text-slate-500">
           No hay acciones pendientes en este momento.
         </p>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 p-5 max-w-2xl">
-          <div className="space-y-4">
-            {data.acciones.map((a, idx) => (
-              <div key={idx} className="flex items-center gap-3">
+        <div className="space-y-4 max-w-2xl">
+          {data.acciones.map((a, idx) => (
+            <div
+              key={idx}
+              className="bg-white rounded-xl border border-slate-200 p-5"
+            >
+              <div className="flex items-center gap-3">
                 <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-semibold flex items-center justify-center shrink-0">
                   {idx + 1}
                 </div>
-                <p className="flex-1 text-sm text-slate-800">{a.texto}</p>
+                <p className="flex-1 text-sm font-semibold text-slate-800">
+                  {a.texto}
+                </p>
                 <PriorityPill level={a.prioridad} />
               </div>
-            ))}
-          </div>
+              {a.detalle && (
+                <p className="text-sm text-slate-500 mt-3 ml-10 leading-relaxed">
+                  {a.detalle}
+                </p>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </PanelLayout>

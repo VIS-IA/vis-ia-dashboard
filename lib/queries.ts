@@ -152,6 +152,7 @@ async function loadDashboardData(): Promise<DashboardData | null> {
     acciones: (actions ?? []).map((a) => ({
       texto: a.texto,
       prioridad: a.prioridad,
+      detalle: a.detalle ?? null,
     })),
   };
 

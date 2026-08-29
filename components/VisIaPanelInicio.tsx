@@ -98,7 +98,15 @@ export default function VisIaPanelInicio({ data: d }: { data: DashboardData }) {
       ...d.oportunidades.map((o) => `- [${o.potencial}] ${o.titulo}: ${o.descripcion}`),
       "",
       "PLAN DE ACCIÓN:",
-      ...d.acciones.map((a, i) => `${i + 1}. [${a.prioridad}] ${a.texto}`),
+      ...d.acciones.flatMap((a, i) => {
+        const item = [`${i + 1}. [${a.prioridad}] ${a.texto}`];
+        if (a.detalle) item.push(`   ${a.detalle}`);
+        return item;
+      }),
+      "",
+      "— Este es un resumen del análisis. Para el detalle completo de cada",
+      "  sección (Reputación, Experiencia del Cliente, Competencia), entra",
+      "  a tu panel VIS IA en línea.",
     ];
 
     const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });

@@ -36,6 +36,7 @@ export interface DashboardOpportunity {
 export interface DashboardAction {
   texto: string;
   prioridad: "Alta" | "Media" | "Baja";
+  detalle: string | null;
 }
 
 export interface ReputationDetail {
