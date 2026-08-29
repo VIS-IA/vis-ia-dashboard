@@ -6,17 +6,27 @@ export const dynamic = "force-dynamic";
 
 export default async function MiCuentaPage() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  const { data: client } = user
-    ? await supabase
+  let user = null;
+  let client = null;
+  try {
+    const {
+      data: { user: fetchedUser },
+    } = await supabase.auth.getUser();
+    user = fetchedUser;
+
+    if (user) {
+      const { data } = await supabase
         .from("clients")
         .select("business_name, client_code, contact_name")
         .eq("user_id", user.id)
-        .single()
-    : { data: null };
+        .single();
+      client = data;
+    }
+  } catch {
+    // Supabase didn't respond in time — show what we can (the sign-out
+    // button still works) instead of crashing the page.
+  }
 
   return (
     <PanelLayout title="Mi Cuenta">

@@ -7,6 +7,16 @@ import type { DashboardData } from "@/lib/types";
  * Returns null if the user has no client record or no report yet.
  */
 export async function getDashboardData(): Promise<DashboardData | null> {
+  try {
+    return await loadDashboardData();
+  } catch {
+    // A timed-out or failed request to Supabase should never crash the
+    // page — show the "no hay análisis disponible" state instead.
+    return null;
+  }
+}
+
+async function loadDashboardData(): Promise<DashboardData | null> {
   const supabase = createClient();
 
   const {
@@ -140,6 +150,14 @@ export interface ReportSummary {
  * reportes" button.
  */
 export async function getReportHistory(): Promise<ReportSummary[]> {
+  try {
+    return await loadReportHistory();
+  } catch {
+    return [];
+  }
+}
+
+async function loadReportHistory(): Promise<ReportSummary[]> {
   const supabase = createClient();
 
   const {
