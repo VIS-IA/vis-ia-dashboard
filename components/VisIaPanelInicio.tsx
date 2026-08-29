@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { ICON_MAP } from "@/lib/icons";
 import { PanelSidebar } from "@/components/PanelLayout";
+import ScoreGauge from "@/components/ScoreGauge";
 import type { DashboardData } from "@/lib/types";
 
 /**
@@ -177,23 +178,19 @@ export default function VisIaPanelInicio({ data: d }: { data: DashboardData }) {
               <p className="text-blue-600 font-semibold text-sm mb-3">
                 VIS IA INTELLIGENCE
               </p>
-              <p className="text-sm text-slate-500 mb-2">
+              <p className="text-sm text-slate-500 mb-4">
                 Tu negocio está actualmente en:
               </p>
-              <div className="flex items-end gap-3 mb-3">
-                <span className="text-6xl font-bold text-emerald-500 leading-none">
-                  {d.visScore.current}
-                </span>
-                <span className="text-lg text-slate-400 pb-1">/100</span>
-                <TrendingUp className="text-blue-400 mb-2" size={28} />
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                  {d.visScore.status}
-                </span>
-                <span className="text-xs text-slate-500">
-                  — {d.visScore.statusNote}
-                </span>
+              <div className="flex items-center gap-5">
+                <ScoreGauge score={d.visScore.current} />
+                <div>
+                  <span className="bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-full inline-block">
+                    {d.visScore.status}
+                  </span>
+                  <p className="text-xs text-slate-500 mt-2">
+                    {d.visScore.statusNote}
+                  </p>
+                </div>
               </div>
             </div>
 

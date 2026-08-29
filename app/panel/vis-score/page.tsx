@@ -1,6 +1,7 @@
 import { getDashboardData } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
-import { TrendingUp, ArrowUp } from "lucide-react";
+import ScoreGauge from "@/components/ScoreGauge";
+import { ArrowUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -22,31 +23,25 @@ export default async function VisScorePage() {
       title="VIS Score"
       subtitle={`Último análisis: ${data.lastAnalysis}`}
     >
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-xl">
-        <div className="flex items-end gap-3 mb-3">
-          <span className="text-6xl font-bold text-emerald-500 leading-none">
-            {data.visScore.current}
-          </span>
-          <span className="text-lg text-slate-400 pb-1">/100</span>
-          <TrendingUp className="text-blue-400 mb-2" size={28} />
-        </div>
-        <div className="flex items-center gap-2 flex-wrap mb-6">
-          <span className="bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+      <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-xl flex items-center gap-8">
+        <ScoreGauge score={data.visScore.current} size={190} />
+        <div>
+          <span className="bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-full inline-block">
             {data.visScore.status}
           </span>
-          <span className="text-xs text-slate-500">
-            — {data.visScore.statusNote}
-          </span>
-        </div>
-        <div className="flex items-center justify-between border-t border-slate-100 pt-4">
-          <span className="text-sm text-slate-500">
-            Puntaje anterior: {data.visScore.previous}/100
-          </span>
-          <span className="text-sm font-semibold text-emerald-600 flex items-center gap-1">
-            <ArrowUp size={14} />
-            {data.visScore.delta > 0 ? "+" : ""}
-            {data.visScore.delta} puntos
-          </span>
+          <p className="text-sm text-slate-500 mt-2 mb-4">
+            {data.visScore.statusNote}
+          </p>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-slate-500">
+              Puntaje anterior: {data.visScore.previous}/100
+            </span>
+            <span className="font-semibold text-emerald-600 flex items-center gap-1">
+              <ArrowUp size={14} />
+              {data.visScore.delta > 0 ? "+" : ""}
+              {data.visScore.delta}
+            </span>
+          </div>
         </div>
       </div>
 

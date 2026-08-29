@@ -77,6 +77,22 @@ async function loadDashboardData(): Promise<DashboardData | null> {
         })
       : "";
 
+  // El "próximo análisis" siempre es exactamente un mes después de la
+  // fecha real del análisis — no depende de un campo que haya que
+  // llenar a mano en la matriz, así nunca queda desactualizado.
+  const nextAnalysisDate = (() => {
+    const base = new Date(report.analysis_date);
+    const next = new Date(base);
+    next.setMonth(next.getMonth() + 1);
+    // Si el mes siguiente es más corto (ej. 31 de enero -> 31 de
+    // febrero no existe), JS lo empuja a marzo. Esto lo corrige para
+    // que caiga en el último día del mes siguiente en vez de saltar.
+    if (next.getDate() !== base.getDate()) {
+      next.setDate(0);
+    }
+    return next;
+  })();
+
   const data: DashboardData = {
     business: {
       name: client.business_name,
@@ -89,7 +105,7 @@ async function loadDashboardData(): Promise<DashboardData | null> {
       role: "Cliente",
     },
     lastAnalysis: formattedDate(report.analysis_date),
-    nextAnalysis: formattedDate(report.next_analysis_date),
+    nextAnalysis: formattedDate(nextAnalysisDate.toISOString()),
     visScore: {
       current: report.vis_score_current,
       previous: report.vis_score_previous,
