@@ -30,7 +30,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
  */
 async function getReportContext(): Promise<{
   clientId: string;
-  businessType: "negocio" | "hotel";
+  businessType: "negocio" | "restaurante" | "hotel";
   latestReportId: string;
   previousReportId: string | null;
 } | null> {
@@ -59,7 +59,8 @@ async function getReportContext(): Promise<{
 
   return {
     clientId: client.id,
-    businessType: (client.business_type as "negocio" | "hotel") ?? "negocio",
+    businessType:
+      (client.business_type as "negocio" | "restaurante" | "hotel") ?? "negocio",
     latestReportId: reports[0].id,
     previousReportId: reports[1]?.id ?? null,
   };
