@@ -41,14 +41,14 @@ export interface DashboardAction {
 
 export interface ReputationDetail {
   avgRating: number;
-  avgRatingPrevious: number;
+  avgRatingPrevious: number | null;
   totalReviews: number;
-  totalReviewsPrevious: number;
-  positiveCount: number;
-  neutralCount: number;
-  negativeCount: number;
-  responseRatePercent: number;
-  unrespondedNegative: number;
+  totalReviewsPrevious: number | null;
+  positiveCount: number | null;
+  neutralCount: number | null;
+  negativeCount: number | null;
+  responseRatePercent: number | null;
+  unrespondedNegative: number | null;
 }
 
 export type ExperienceDetail =
@@ -133,9 +133,9 @@ export interface DashboardData {
   lastAnalysis: string;
   nextAnalysis: string;
   visScore: {
-    current: number;
-    previous: number;
-    delta: number;
+    current: number | null;
+    previous: number | null;
+    delta: number | null;
     status: string;
     statusNote: string;
   };

@@ -39,7 +39,13 @@ export default async function ReputacionPage() {
     );
   }
 
-  const total = detail.positiveCount + detail.neutralCount + detail.negativeCount;
+  const hasBreakdown =
+    detail.positiveCount !== null &&
+    detail.neutralCount !== null &&
+    detail.negativeCount !== null;
+  const total = hasBreakdown
+    ? (detail.positiveCount ?? 0) + (detail.neutralCount ?? 0) + (detail.negativeCount ?? 0)
+    : 0;
   const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
 
   return (
@@ -58,7 +64,9 @@ export default async function ReputacionPage() {
             <Stars rating={detail.avgRating} />
           </div>
           <p className="text-xs text-slate-500">
-            Anterior: {detail.avgRatingPrevious.toFixed(1)}
+            {detail.avgRatingPrevious !== null
+              ? `Anterior: ${detail.avgRatingPrevious.toFixed(1)}`
+              : "Primer reporte"}
           </p>
         </div>
 
@@ -72,61 +80,67 @@ export default async function ReputacionPage() {
             </span>
           </div>
           <p className="text-xs text-slate-500">
-            Anterior: {detail.totalReviewsPrevious}
+            {detail.totalReviewsPrevious !== null
+              ? `Anterior: ${detail.totalReviewsPrevious}`
+              : "Primer reporte"}
           </p>
         </div>
 
-        {/* Sentiment breakdown */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 md:col-span-2">
-          <p className="text-sm font-semibold text-slate-800 mb-4">
-            Distribución de reseñas
-          </p>
-          <div className="w-full h-3 rounded-full overflow-hidden flex bg-slate-100 mb-4">
-            <div
-              className="bg-emerald-500 h-full"
-              style={{ width: `${pct(detail.positiveCount)}%` }}
-            />
-            <div
-              className="bg-amber-400 h-full"
-              style={{ width: `${pct(detail.neutralCount)}%` }}
-            />
-            <div
-              className="bg-red-500 h-full"
-              style={{ width: `${pct(detail.negativeCount)}%` }}
-            />
-          </div>
-          <div className="flex flex-wrap gap-6 text-sm">
-            <span className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              Positivas: {detail.positiveCount} ({pct(detail.positiveCount)}%)
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-              Neutrales: {detail.neutralCount} ({pct(detail.neutralCount)}%)
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-              Negativas: {detail.negativeCount} ({pct(detail.negativeCount)}%)
-            </span>
-          </div>
-        </div>
-
-        {/* Response rate */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
-            <CheckCircle2 size={18} className="text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-slate-800">
-              {detail.responseRatePercent}% de reseñas respondidas
+        {/* Sentiment breakdown — solo si hay evidencia clasificada */}
+        {hasBreakdown && (
+          <div className="bg-white rounded-xl border border-slate-200 p-6 md:col-span-2">
+            <p className="text-sm font-semibold text-slate-800 mb-4">
+              Distribución de reseñas
             </p>
-            <p className="text-xs text-slate-500">
-              Responder rápido mejora tu reputación
-            </p>
+            <div className="w-full h-3 rounded-full overflow-hidden flex bg-slate-100 mb-4">
+              <div
+                className="bg-emerald-500 h-full"
+                style={{ width: `${pct(detail.positiveCount ?? 0)}%` }}
+              />
+              <div
+                className="bg-amber-400 h-full"
+                style={{ width: `${pct(detail.neutralCount ?? 0)}%` }}
+              />
+              <div
+                className="bg-red-500 h-full"
+                style={{ width: `${pct(detail.negativeCount ?? 0)}%` }}
+              />
+            </div>
+            <div className="flex flex-wrap gap-6 text-sm">
+              <span className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                Positivas: {detail.positiveCount} ({pct(detail.positiveCount ?? 0)}%)
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                Neutrales: {detail.neutralCount} ({pct(detail.neutralCount ?? 0)}%)
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                Negativas: {detail.negativeCount} ({pct(detail.negativeCount ?? 0)}%)
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
-        {detail.unrespondedNegative > 0 && (
+        {/* Response rate — solo si hay evidencia */}
+        {detail.responseRatePercent !== null && (
+          <div className="bg-white rounded-xl border border-slate-200 p-6 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+              <CheckCircle2 size={18} className="text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-800">
+                {detail.responseRatePercent}% de reseñas respondidas
+              </p>
+              <p className="text-xs text-slate-500">
+                Responder rápido mejora tu reputación
+              </p>
+            </div>
+          </div>
+        )}
+
+        {detail.unrespondedNegative !== null && detail.unrespondedNegative > 0 && (
           <div className="bg-white rounded-xl border border-slate-200 p-6 flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
               <AlertTriangle size={18} className="text-red-500" />

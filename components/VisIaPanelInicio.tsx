@@ -79,8 +79,12 @@ export default function VisIaPanelInicio({ data: d }: { data: DashboardData }) {
       `${d.business.location}  •  ID: ${d.business.visId}`,
       `Último análisis: ${d.lastAnalysis}`,
       "",
-      `VIS SCORE: ${d.visScore.current}/100 (${d.visScore.status})`,
-      `Anterior: ${d.visScore.previous}/100  •  Cambio: ${d.visScore.delta > 0 ? "+" : ""}${d.visScore.delta}`,
+      d.visScore.current !== null
+        ? `VIS SCORE: ${d.visScore.current}/100 (${d.visScore.status})`
+        : "VIS SCORE: PENDIENTE — falta completar las 15 preguntas internas",
+      d.visScore.previous !== null && d.visScore.delta !== null
+        ? `Anterior: ${d.visScore.previous}/100  •  Cambio: ${d.visScore.delta > 0 ? "+" : ""}${d.visScore.delta}`
+        : "",
       `${d.visScore.statusNote}`,
       "",
       `ACCIÓN RECOMENDADA #1: ${d.accionRecomendada.titulo}`,
@@ -190,15 +194,30 @@ export default function VisIaPanelInicio({ data: d }: { data: DashboardData }) {
                 Tu negocio está actualmente en:
               </p>
               <div className="flex items-center gap-5">
-                <ScoreGauge score={d.visScore.current} />
-                <div>
-                  <span className="bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-full inline-block">
-                    {d.visScore.status}
-                  </span>
-                  <p className="text-xs text-slate-500 mt-2">
-                    {d.visScore.statusNote}
-                  </p>
-                </div>
+                {d.visScore.current !== null ? (
+                  <>
+                    <ScoreGauge score={d.visScore.current} />
+                    <div>
+                      <span className="bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-full inline-block">
+                        {d.visScore.status}
+                      </span>
+                      <p className="text-xs text-slate-500 mt-2">
+                        {d.visScore.statusNote}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
+                    <span className="bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full inline-block mb-2">
+                      PENDIENTE
+                    </span>
+                    <p className="text-sm text-amber-900">
+                      El VIS Score se calcula cuando se completen las 15
+                      preguntas — el análisis externo ya está listo, falta
+                      tu información interna.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

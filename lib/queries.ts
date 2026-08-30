@@ -269,7 +269,7 @@ async function loadMetrics(
 export interface ReportSummary {
   id: string;
   analysisDate: string;
-  visScoreCurrent: number;
+  visScoreCurrent: number | null;
   visScoreStatus: string;
 }
 

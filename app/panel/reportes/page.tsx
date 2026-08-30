@@ -29,10 +29,16 @@ export default async function ReportesPage() {
                 </p>
                 <p className="text-xs text-slate-500">{r.visScoreStatus}</p>
               </div>
-              <span className="text-lg font-bold text-slate-900">
-                {r.visScoreCurrent}
-                <span className="text-xs text-slate-400 font-normal">/100</span>
-              </span>
+              {r.visScoreCurrent !== null ? (
+                <span className="text-lg font-bold text-slate-900">
+                  {r.visScoreCurrent}
+                  <span className="text-xs text-slate-400 font-normal">/100</span>
+                </span>
+              ) : (
+                <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">
+                  Pendiente
+                </span>
+              )}
             </div>
           ))}
         </div>

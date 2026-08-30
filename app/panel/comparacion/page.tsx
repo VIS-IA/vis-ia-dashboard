@@ -76,18 +76,20 @@ export default async function ComparacionPage() {
     >
       <div className="space-y-6 max-w-2xl">
         {/* VIS Score */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <h3 className="text-sm font-semibold text-blue-600 mb-1 flex items-center gap-2">
-            <TrendingUp size={15} /> VIS Score
-          </h3>
-          <ChangeRow
-            label="Puntaje general"
-            current={data.visScore.current}
-            previous={data.visScore.previous}
-            currentSuffix="/100"
-            previousSuffix="/100"
-          />
-        </div>
+        {data.visScore.current !== null && (
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 className="text-sm font-semibold text-blue-600 mb-1 flex items-center gap-2">
+              <TrendingUp size={15} /> VIS Score
+            </h3>
+            <ChangeRow
+              label="Puntaje general"
+              current={data.visScore.current}
+              previous={data.visScore.previous ?? data.visScore.current}
+              currentSuffix="/100"
+              previousSuffix="/100"
+            />
+          </div>
+        )}
 
         {/* Metrics */}
         <div className="bg-white rounded-xl border border-slate-200 p-5">
@@ -128,12 +130,12 @@ export default async function ComparacionPage() {
             <ChangeRow
               label="Calificación promedio"
               current={reputation.avgRating.toFixed(1)}
-              previous={reputation.avgRatingPrevious.toFixed(1)}
+              previous={(reputation.avgRatingPrevious ?? reputation.avgRating).toFixed(1)}
             />
             <ChangeRow
               label="Reseñas totales"
               current={reputation.totalReviews}
-              previous={reputation.totalReviewsPrevious}
+              previous={reputation.totalReviewsPrevious ?? reputation.totalReviews}
             />
           </div>
         )}

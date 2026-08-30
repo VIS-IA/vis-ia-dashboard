@@ -18,6 +18,24 @@ export default async function VisScorePage() {
     );
   }
 
+  if (data.visScore.current === null) {
+    return (
+      <PanelLayout title="VIS Score" subtitle={`Último análisis: ${data.lastAnalysis}`}>
+        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-8 max-w-xl">
+          <span className="bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full inline-block mb-3">
+            PENDIENTE
+          </span>
+          <p className="text-sm text-amber-900">
+            El análisis externo de tu negocio ya está listo, pero el VIS
+            Score todavía no se calcula — falta que completes las 15
+            preguntas internas. VIS IA no asigna un puntaje sin esa
+            información, para no basarlo en datos incompletos.
+          </p>
+        </div>
+      </PanelLayout>
+    );
+  }
+
   return (
     <PanelLayout
       title="VIS Score"
@@ -32,16 +50,18 @@ export default async function VisScorePage() {
           <p className="text-sm text-slate-500 mt-2 mb-4">
             {data.visScore.statusNote}
           </p>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-500">
-              Puntaje anterior: {data.visScore.previous}/100
-            </span>
-            <span className="font-semibold text-emerald-600 flex items-center gap-1">
-              <ArrowUp size={14} />
-              {data.visScore.delta > 0 ? "+" : ""}
-              {data.visScore.delta}
-            </span>
-          </div>
+          {data.visScore.previous !== null && data.visScore.delta !== null && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-slate-500">
+                Puntaje anterior: {data.visScore.previous}/100
+              </span>
+              <span className="font-semibold text-emerald-600 flex items-center gap-1">
+                <ArrowUp size={14} />
+                {data.visScore.delta > 0 ? "+" : ""}
+                {data.visScore.delta}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
