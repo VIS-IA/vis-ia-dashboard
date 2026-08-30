@@ -1,11 +1,16 @@
-import { getDashboardData } from "@/lib/queries";
+import Link from "next/link";
+import { ClipboardList, ChevronRight } from "lucide-react";
+import { getDashboardData, getOnboardingStatus } from "@/lib/queries";
 import VisIaPanelInicio from "@/components/VisIaPanelInicio";
 
 // Always fetch fresh data — this is a live client report, not static content.
 export const dynamic = "force-dynamic";
 
 export default async function PanelPage() {
-  const data = await getDashboardData();
+  const [data, onboarding] = await Promise.all([
+    getDashboardData(),
+    getOnboardingStatus(),
+  ]);
 
   if (!data) {
     return (
@@ -24,5 +29,22 @@ export default async function PanelPage() {
     );
   }
 
-  return <VisIaPanelInicio data={data} />;
+  return (
+    <div>
+      {!onboarding.completed && (
+        <Link
+          href="/panel/preguntas"
+          className="flex items-center gap-3 bg-blue-600 text-white px-6 py-3 hover:bg-blue-700 transition-colors"
+        >
+          <ClipboardList size={16} />
+          <span className="text-sm font-medium flex-1">
+            Nos faltan tus respuestas a las 15 preguntas sobre tu negocio —
+            tómate unos minutos para completarlas
+          </span>
+          <ChevronRight size={16} />
+        </Link>
+      )}
+      <VisIaPanelInicio data={data} />
+    </div>
+  );
 }

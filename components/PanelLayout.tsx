@@ -12,6 +12,7 @@ import {
   CheckSquare,
   FileText,
   UserCircle,
+  ClipboardList,
 } from "lucide-react";
 
 // Número de WhatsApp del negocio, en formato internacional sin signos:
@@ -23,6 +24,7 @@ const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponen
 
 export const NAV_ITEMS = [
   { icon: Home, label: "Inicio", href: "/panel" },
+  { icon: ClipboardList, label: "15 Preguntas", href: "/panel/preguntas" },
   { icon: BarChart3, label: "VIS Score", href: "/panel/vis-score" },
   { icon: Star, label: "Pérdida Invisible", href: "/panel/perdidas" },
   { icon: Sparkles, label: "Valor Oculto", href: "/panel/oportunidades" },

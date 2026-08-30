@@ -5,6 +5,8 @@ import type {
   ReputationDetail,
   ExperienceDetail,
   Competitor,
+  OnboardingQuestion,
+  OnboardingAnswerValue,
 } from "@/lib/types";
 
 /**
@@ -456,5 +458,76 @@ export async function getCompetitors(): Promise<Competitor[]> {
     }));
   } catch {
     return [];
+  }
+}
+
+/**
+ * LAS 15 PREGUNTAS
+ * -----------------
+ * Catálogo fijo (igual para todos los planes) + estado de si el
+ * cliente ya las respondió, y sus respuestas si ya lo hizo. Se
+ * responden una sola vez, no por reporte.
+ */
+export async function getOnboardingQuestions(): Promise<OnboardingQuestion[]> {
+  try {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("onboarding_questions")
+      .select("*")
+      .order("order_num", { ascending: true });
+
+    return (data ?? []).map((q) => ({
+      questionKey: q.question_key,
+      orderNum: q.order_num,
+      questionText: q.question_text,
+      purpose: q.purpose,
+      responseType: q.response_type,
+      options: q.options,
+      hasTextField: q.has_text_field,
+      textFieldLabel: q.text_field_label,
+      required: q.required,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export interface OnboardingStatus {
+  completed: boolean;
+  answers: Record<string, OnboardingAnswerValue>;
+}
+
+export async function getOnboardingStatus(): Promise<OnboardingStatus> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { completed: false, answers: {} };
+
+    const { data: client } = await supabase
+      .from("clients")
+      .select("id, onboarding_completed")
+      .eq("user_id", user.id)
+      .single();
+    if (!client) return { completed: false, answers: {} };
+
+    if (!client.onboarding_completed) {
+      return { completed: false, answers: {} };
+    }
+
+    const { data: rows } = await supabase
+      .from("client_onboarding_answers")
+      .select("question_key, answer")
+      .eq("client_id", client.id);
+
+    const answers: Record<string, OnboardingAnswerValue> = {};
+    for (const row of rows ?? []) {
+      answers[row.question_key] = row.answer;
+    }
+
+    return { completed: true, answers };
+  } catch {
+    return { completed: false, answers: {} };
   }
 }
