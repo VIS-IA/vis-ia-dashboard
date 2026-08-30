@@ -51,14 +51,28 @@ export interface ReputationDetail {
   unrespondedNegative: number;
 }
 
-export interface ExperienceDetail {
-  avgResponseTimeLabel: string;
-  avgResponseTimePreviousLabel: string;
-  satisfactionScore: number;
-  satisfactionPrevious: number;
-  totalInteractions: number;
-  totalInteractionsPrevious: number;
-}
+export type ExperienceDetail =
+  | {
+      type: "negocio";
+      sentimentScore: number;
+      sentimentScorePrevious: number | null;
+      positiveMentions: number;
+      negativeMentions: number;
+      topTheme: string | null;
+    }
+  | {
+      type: "hotel";
+      cleanliness: number;
+      cleanlinessPrevious: number | null;
+      staff: number;
+      staffPrevious: number | null;
+      comfort: number;
+      comfortPrevious: number | null;
+      location: number;
+      locationPrevious: number | null;
+      valueForMoney: number;
+      valueForMoneyPrevious: number | null;
+    };
 
 export interface Competitor {
   name: string;

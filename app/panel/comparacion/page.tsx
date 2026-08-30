@@ -144,18 +144,33 @@ export default async function ComparacionPage() {
             <h3 className="text-sm font-semibold text-purple-600 mb-1">
               Experiencia del Cliente
             </h3>
-            <ChangeRow
-              label="Satisfacción"
-              current={experience.satisfactionScore}
-              previous={experience.satisfactionPrevious}
-              currentSuffix="/100"
-              previousSuffix="/100"
-            />
-            <ChangeRow
-              label="Interacciones totales"
-              current={experience.totalInteractions}
-              previous={experience.totalInteractionsPrevious}
-            />
+            {experience.type === "negocio" ? (
+              <ChangeRow
+                label="Puntaje de sentimiento (reseñas)"
+                current={experience.sentimentScore}
+                previous={experience.sentimentScorePrevious ?? experience.sentimentScore}
+                currentSuffix="/100"
+                previousSuffix="/100"
+              />
+            ) : (
+              <>
+                <ChangeRow
+                  label="Limpieza"
+                  current={experience.cleanliness.toFixed(1)}
+                  previous={(experience.cleanlinessPrevious ?? experience.cleanliness).toFixed(1)}
+                />
+                <ChangeRow
+                  label="Personal / Atención"
+                  current={experience.staff.toFixed(1)}
+                  previous={(experience.staffPrevious ?? experience.staff).toFixed(1)}
+                />
+                <ChangeRow
+                  label="Comodidad"
+                  current={experience.comfort.toFixed(1)}
+                  previous={(experience.comfortPrevious ?? experience.comfort).toFixed(1)}
+                />
+              </>
+            )}
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type {
   DashboardData,
+  DashboardMetric,
   ReputationDetail,
   ExperienceDetail,
   Competitor,
@@ -21,41 +22,71 @@ export async function getDashboardData(): Promise<DashboardData | null> {
   }
 }
 
-async function loadDashboardData(): Promise<DashboardData | null> {
+/**
+ * Shared helper: returns the current user's client id, latest report,
+ * and the report right before it (for computing month-over-month
+ * changes automatically). previousReportId is null on a client's very
+ * first report.
+ */
+async function getReportContext(): Promise<{
+  clientId: string;
+  businessType: "negocio" | "hotel";
+  latestReportId: string;
+  previousReportId: string | null;
+} | null> {
   const supabase = createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
   if (!user) return null;
 
-  // RLS ensures this only ever returns the caller's own row(s).
-  const { data: client, error: clientError } = await supabase
+  const { data: client } = await supabase
     .from("clients")
-    .select("*")
+    .select("id, business_type")
     .eq("user_id", user.id)
     .single();
+  if (!client) return null;
 
-  if (clientError || !client) return null;
-
-  const { data: report, error: reportError } = await supabase
+  const { data: reports } = await supabase
     .from("reports")
-    .select("*")
+    .select("id")
     .eq("client_id", client.id)
     .order("analysis_date", { ascending: false })
-    .limit(1)
+    .limit(2);
+
+  if (!reports || reports.length === 0) return null;
+
+  return {
+    clientId: client.id,
+    businessType: (client.business_type as "negocio" | "hotel") ?? "negocio",
+    latestReportId: reports[0].id,
+    previousReportId: reports[1]?.id ?? null,
+  };
+}
+
+async function loadDashboardData(): Promise<DashboardData | null> {
+  const supabase = createClient();
+
+  const context = await getReportContext();
+  if (!context) return null;
+
+  const { data: client } = await supabase
+    .from("clients")
+    .select("*")
+    .eq("id", context.clientId)
     .single();
+  if (!client) return null;
 
-  if (reportError || !report) return null;
+  const { data: report } = await supabase
+    .from("reports")
+    .select("*")
+    .eq("id", context.latestReportId)
+    .single();
+  if (!report) return null;
 
-  const [{ data: metrics }, { data: losses }, { data: opportunities }, { data: actions }] =
+  const [{ data: losses }, { data: opportunities }, { data: actions }, metrics] =
     await Promise.all([
-      supabase
-        .from("metrics")
-        .select("*")
-        .eq("report_id", report.id)
-        .order("sort_order", { ascending: true }),
       supabase
         .from("losses")
         .select("*")
@@ -71,6 +102,7 @@ async function loadDashboardData(): Promise<DashboardData | null> {
         .select("*")
         .eq("report_id", report.id)
         .order("sort_order", { ascending: true }),
+      loadMetrics(context.latestReportId, context.previousReportId),
     ]);
 
   const formattedDate = (value: string | null) =>
@@ -127,16 +159,7 @@ async function loadDashboardData(): Promise<DashboardData | null> {
       titulo: report.accion_recomendada_titulo ?? "",
       motivo: report.accion_recomendada_motivo ?? "",
     },
-    metrics: (metrics ?? []).map((m) => ({
-      icon_key: m.icon_key,
-      label: m.label,
-      value: m.value,
-      suffix: m.suffix,
-      stars: m.stars,
-      previous: m.previous,
-      delta: m.delta,
-      accent: m.accent,
-    })),
+    metrics,
     perdidas: (losses ?? []).map((p) => ({
       icon_key: p.icon_key,
       titulo: p.titulo,
@@ -157,6 +180,87 @@ async function loadDashboardData(): Promise<DashboardData | null> {
   };
 
   return data;
+}
+
+/**
+ * MÉTRICAS — LA FÓRMULA AUTOMÁTICA
+ * ----------------------------------
+ * Cada mes, en la matriz solo se escribe UN número por métrica
+ * (metric_values.value_numeric). Todo lo demás — el ícono, la
+ * etiqueta, el "Anterior: X", y el cambio ("+8", "+26%") — se
+ * calcula aquí solo, comparando contra el valor de esa misma métrica
+ * en el reporte anterior del mismo cliente.
+ */
+async function loadMetrics(
+  latestReportId: string,
+  previousReportId: string | null
+): Promise<DashboardMetric[]> {
+  const supabase = createClient();
+
+  const [{ data: currentRows }, previousRowsResult] = await Promise.all([
+    supabase
+      .from("metric_values")
+      .select("*, metric_definitions(*)")
+      .eq("report_id", latestReportId)
+      .order("metric_definitions(sort_order)", { ascending: true }),
+    previousReportId
+      ? supabase
+          .from("metric_values")
+          .select("metric_key, value_numeric")
+          .eq("report_id", previousReportId)
+      : Promise.resolve({ data: [] as { metric_key: string; value_numeric: number }[] }),
+  ]);
+
+  const previousByKey = new Map<string, number>();
+  for (const row of previousRowsResult.data ?? []) {
+    previousByKey.set(row.metric_key, row.value_numeric);
+  }
+
+  const formatNumber = (n: number) => Math.round(n).toLocaleString("en-US");
+
+  return (currentRows ?? []).map((row: any) => {
+    const def = row.metric_definitions;
+    const current: number = row.value_numeric;
+    const previous = previousByKey.get(row.metric_key) ?? null;
+
+    const value = def.is_rating
+      ? current.toFixed(1)
+      : def.unit === "/100"
+      ? Math.round(current).toString()
+      : formatNumber(current);
+
+    let previousLabel = "Primer reporte";
+    let deltaLabel = "";
+
+    if (previous !== null) {
+      previousLabel = def.is_rating
+        ? `Anterior: ${previous.toFixed(1)}`
+        : def.unit === "/100"
+        ? `Anterior: ${Math.round(previous)}/100`
+        : `Anterior: ${formatNumber(previous)}`;
+
+      if (def.delta_style === "percent" && previous !== 0) {
+        const pct = Math.round(((current - previous) / previous) * 100);
+        deltaLabel = `${pct > 0 ? "+" : ""}${pct}%`;
+      } else {
+        const diff = def.is_rating
+          ? Math.round((current - previous) * 10) / 10
+          : Math.round(current - previous);
+        deltaLabel = `${diff > 0 ? "+" : ""}${diff}`;
+      }
+    }
+
+    return {
+      icon_key: def.icon_key,
+      label: def.label,
+      value,
+      suffix: def.unit === "/100" ? "/100" : null,
+      stars: def.is_rating ? current : null,
+      previous: previousLabel,
+      delta: deltaLabel,
+      accent: def.accent,
+    };
+  });
 }
 
 export interface ReportSummary {
@@ -214,47 +318,20 @@ async function loadReportHistory(): Promise<ReportSummary[]> {
   }));
 }
 
-/** Shared helper: returns the current user's latest report id, or null. */
-async function getLatestReportId(): Promise<string | null> {
-  const supabase = createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: client } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
-  if (!client) return null;
-
-  const { data: report } = await supabase
-    .from("reports")
-    .select("id")
-    .eq("client_id", client.id)
-    .order("analysis_date", { ascending: false })
-    .limit(1)
-    .single();
-
-  return report?.id ?? null;
-}
-
 /**
  * Reputation detail for the "Reputación" page. Returns null if no
  * reputation_details row has been loaded for the latest report yet.
  */
 export async function getReputationDetail(): Promise<ReputationDetail | null> {
   try {
-    const reportId = await getLatestReportId();
-    if (!reportId) return null;
+    const context = await getReportContext();
+    if (!context) return null;
 
     const supabase = createClient();
     const { data } = await supabase
       .from("reputation_details")
       .select("*")
-      .eq("report_id", reportId)
+      .eq("report_id", context.latestReportId)
       .single();
 
     if (!data) return null;
@@ -277,29 +354,76 @@ export async function getReputationDetail(): Promise<ReputationDetail | null> {
 
 /**
  * Customer experience detail for the "Experiencia del Cliente" page.
- * Returns null if no experience_details row exists yet.
+ * Reads from a different table depending on the client's business
+ * type — negocios normales (basado en menciones de servicio dentro
+ * de reseñas) vs hoteles (subcalificaciones reales de Booking /
+ * Expedia / TripAdvisor). "Previous" values come from the client's
+ * previous report automatically, not typed by hand.
  */
 export async function getExperienceDetail(): Promise<ExperienceDetail | null> {
   try {
-    const reportId = await getLatestReportId();
-    if (!reportId) return null;
+    const context = await getReportContext();
+    if (!context) return null;
 
     const supabase = createClient();
-    const { data } = await supabase
-      .from("experience_details")
-      .select("*")
-      .eq("report_id", reportId)
-      .single();
 
-    if (!data) return null;
+    if (context.businessType === "hotel") {
+      const [{ data: current }, prev] = await Promise.all([
+        supabase
+          .from("experience_hotel")
+          .select("*")
+          .eq("report_id", context.latestReportId)
+          .single(),
+        context.previousReportId
+          ? supabase
+              .from("experience_hotel")
+              .select("*")
+              .eq("report_id", context.previousReportId)
+              .single()
+          : Promise.resolve({ data: null }),
+      ]);
+
+      if (!current) return null;
+
+      return {
+        type: "hotel",
+        cleanliness: current.cleanliness,
+        cleanlinessPrevious: prev.data?.cleanliness ?? null,
+        staff: current.staff,
+        staffPrevious: prev.data?.staff ?? null,
+        comfort: current.comfort,
+        comfortPrevious: prev.data?.comfort ?? null,
+        location: current.location,
+        locationPrevious: prev.data?.location ?? null,
+        valueForMoney: current.value_for_money,
+        valueForMoneyPrevious: prev.data?.value_for_money ?? null,
+      };
+    }
+
+    const [{ data: current }, prev] = await Promise.all([
+      supabase
+        .from("experience_negocio")
+        .select("*")
+        .eq("report_id", context.latestReportId)
+        .single(),
+      context.previousReportId
+        ? supabase
+            .from("experience_negocio")
+            .select("*")
+            .eq("report_id", context.previousReportId)
+            .single()
+        : Promise.resolve({ data: null }),
+    ]);
+
+    if (!current) return null;
 
     return {
-      avgResponseTimeLabel: data.avg_response_time_label,
-      avgResponseTimePreviousLabel: data.avg_response_time_previous_label,
-      satisfactionScore: data.satisfaction_score,
-      satisfactionPrevious: data.satisfaction_previous,
-      totalInteractions: data.total_interactions,
-      totalInteractionsPrevious: data.total_interactions_previous,
+      type: "negocio",
+      sentimentScore: current.sentiment_score,
+      sentimentScorePrevious: prev.data?.sentiment_score ?? null,
+      positiveMentions: current.positive_mentions,
+      negativeMentions: current.negative_mentions,
+      topTheme: current.top_theme,
     };
   } catch {
     return null;
@@ -312,14 +436,14 @@ export async function getExperienceDetail(): Promise<ExperienceDetail | null> {
  */
 export async function getCompetitors(): Promise<Competitor[]> {
   try {
-    const reportId = await getLatestReportId();
-    if (!reportId) return [];
+    const context = await getReportContext();
+    if (!context) return [];
 
     const supabase = createClient();
     const { data } = await supabase
       .from("competitors")
       .select("*")
-      .eq("report_id", reportId)
+      .eq("report_id", context.latestReportId)
       .order("sort_order", { ascending: true });
 
     return (data ?? []).map((c) => ({
