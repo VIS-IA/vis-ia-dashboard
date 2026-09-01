@@ -110,7 +110,12 @@ export default function VisIaPanelInicio({
       "PLAN DE ACCIÓN:",
       ...d.acciones.flatMap((a, i) => {
         const item = [`${i + 1}. [${a.prioridad}] ${a.texto}`];
-        if (a.detalle) item.push(`   ${a.detalle}`);
+        if (a.problema) item.push(`   Problema: ${a.problema}`);
+        if (a.evidencia) item.push(`   Evidencia: ${a.evidencia}`);
+        if (a.causaProbable) item.push(`   Causa probable: ${a.causaProbable}`);
+        if (a.detalle) item.push(`   Impacto: ${a.detalle}`);
+        if (a.nivelCerteza) item.push(`   Certeza: ${a.nivelCerteza}`);
+        if (a.metrica) item.push(`   Métrica de éxito: ${a.metrica}`);
         return item;
       }),
       "",

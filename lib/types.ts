@@ -33,10 +33,23 @@ export interface DashboardOpportunity {
   potencial: "Alto" | "Medio" | "Baja";
 }
 
+export type CertaintyLevel =
+  | "Confirmado"
+  | "Medido"
+  | "Estimado"
+  | "Potencial"
+  | "No calculable";
+
 export interface DashboardAction {
   texto: string;
   prioridad: "Alta" | "Media" | "Baja";
   detalle: string | null;
+  problema: string | null;
+  evidencia: string | null;
+  causaProbable: string | null;
+  nivelCerteza: CertaintyLevel | null;
+  metrica: string | null;
+  fechaRevision: string | null;
 }
 
 export interface ReputationDetail {

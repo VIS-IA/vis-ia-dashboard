@@ -179,6 +179,18 @@ async function loadDashboardData(): Promise<DashboardData | null> {
       texto: a.texto,
       prioridad: a.prioridad,
       detalle: a.detalle ?? null,
+      problema: a.problema ?? null,
+      evidencia: a.evidencia ?? null,
+      causaProbable: a.causa_probable ?? null,
+      nivelCerteza: a.nivel_certeza ?? null,
+      metrica: a.metrica ?? null,
+      fechaRevision: a.fecha_revision
+        ? new Date(a.fecha_revision).toLocaleDateString("es-ES", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })
+        : null,
     })),
   };
 
