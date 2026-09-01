@@ -1,4 +1,4 @@
-import { getDashboardData } from "@/lib/queries";
+import { getDashboardData, getOnboardingStatus } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import ScoreGauge from "@/components/ScoreGauge";
 import { ArrowUp } from "lucide-react";
@@ -6,7 +6,10 @@ import { ArrowUp } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function VisScorePage() {
-  const data = await getDashboardData();
+  const [data, onboarding] = await Promise.all([
+    getDashboardData(),
+    getOnboardingStatus(),
+  ]);
 
   if (!data) {
     return (
@@ -26,10 +29,9 @@ export default async function VisScorePage() {
             PENDIENTE
           </span>
           <p className="text-sm text-amber-900">
-            El análisis externo de tu negocio ya está listo, pero el VIS
-            Score todavía no se calcula — falta que completes las 15
-            preguntas internas. VIS IA no asigna un puntaje sin esa
-            información, para no basarlo en datos incompletos.
+            {onboarding.completed
+              ? "Ya recibimos tus respuestas a las 15 preguntas — VIS IA está terminando de calcular tu VIS Score con esa información."
+              : "El análisis externo de tu negocio ya está listo, pero el VIS Score todavía no se calcula — falta que completes las 15 preguntas internas. VIS IA no asigna un puntaje sin esa información, para no basarlo en datos incompletos."}
           </p>
         </div>
       </PanelLayout>

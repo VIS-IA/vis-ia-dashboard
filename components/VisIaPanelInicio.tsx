@@ -9,7 +9,6 @@ import {
   TrendingUp,
   CheckSquare,
   FileText,
-  Bell,
   ArrowUp,
   ChevronRight,
   Shield,
@@ -21,6 +20,7 @@ import {
 import { ICON_MAP } from "@/lib/icons";
 import { PanelSidebar } from "@/components/PanelLayout";
 import ScoreGauge from "@/components/ScoreGauge";
+import NotificationsBell from "@/components/NotificationsBell";
 import type { DashboardData } from "@/lib/types";
 
 /**
@@ -72,7 +72,13 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-export default function VisIaPanelInicio({ data: d }: { data: DashboardData }) {
+export default function VisIaPanelInicio({
+  data: d,
+  onboardingCompleted = false,
+}: {
+  data: DashboardData;
+  onboardingCompleted?: boolean;
+}) {
   function downloadReport() {
     const lines = [
       `VIS IA — Reporte de ${d.business.name}`,
@@ -164,12 +170,7 @@ export default function VisIaPanelInicio({ data: d }: { data: DashboardData }) {
             >
               <Download size={15} /> Descargar reporte
             </button>
-            <button className="relative w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
-              <Bell size={16} className="text-slate-500" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">
-                3
-              </span>
-            </button>
+            <NotificationsBell />
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-full bg-slate-200" />
               <div>
@@ -212,9 +213,9 @@ export default function VisIaPanelInicio({ data: d }: { data: DashboardData }) {
                       PENDIENTE
                     </span>
                     <p className="text-sm text-amber-900">
-                      El VIS Score se calcula cuando se completen las 15
-                      preguntas — el análisis externo ya está listo, falta
-                      tu información interna.
+                      {onboardingCompleted
+                        ? "Ya recibimos tus respuestas a las 15 preguntas — VIS IA está terminando de calcular tu VIS Score con esa información."
+                        : "El VIS Score se calcula cuando se completen las 15 preguntas — el análisis externo ya está listo, falta tu información interna."}
                     </p>
                   </div>
                 )}

@@ -60,7 +60,7 @@ export default async function PanelPage() {
           <ChevronRight size={16} />
         </Link>
       )}
-      <VisIaPanelInicio data={data} />
+      <VisIaPanelInicio data={data} onboardingCompleted={onboarding.completed} />
     </div>
   );
 }
