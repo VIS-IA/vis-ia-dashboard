@@ -19,11 +19,21 @@ export interface DashboardMetric {
   accent: "blue" | "green" | "purple";
 }
 
+export type CertaintyLevel =
+  | "Confirmado"
+  | "Medido"
+  | "Estimado"
+  | "Potencial"
+  | "No calculable";
+
 export interface DashboardLoss {
   icon_key: IconKey;
   titulo: string;
   descripcion: string;
   impacto: "Alto" | "Media" | "Baja";
+  evidencia: string | null;
+  causaProbable: string | null;
+  nivelCerteza: CertaintyLevel | null;
 }
 
 export interface DashboardOpportunity {
@@ -31,14 +41,10 @@ export interface DashboardOpportunity {
   titulo: string;
   descripcion: string;
   potencial: "Alto" | "Medio" | "Baja";
+  evidencia: string | null;
+  causaProbable: string | null;
+  nivelCerteza: CertaintyLevel | null;
 }
-
-export type CertaintyLevel =
-  | "Confirmado"
-  | "Medido"
-  | "Estimado"
-  | "Potencial"
-  | "No calculable";
 
 export interface DashboardAction {
   texto: string;

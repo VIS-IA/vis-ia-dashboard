@@ -168,12 +168,18 @@ async function loadDashboardData(): Promise<DashboardData | null> {
       titulo: p.titulo,
       descripcion: p.descripcion,
       impacto: p.impacto,
+      evidencia: p.evidencia ?? null,
+      causaProbable: p.causa_probable ?? null,
+      nivelCerteza: p.nivel_certeza ?? null,
     })),
     oportunidades: (opportunities ?? []).map((o) => ({
       icon_key: o.icon_key,
       titulo: o.titulo,
       descripcion: o.descripcion,
       potencial: o.potencial,
+      evidencia: o.evidencia ?? null,
+      causaProbable: o.causa_probable ?? null,
+      nivelCerteza: o.nivel_certeza ?? null,
     })),
     acciones: (actions ?? []).map((a) => ({
       texto: a.texto,
