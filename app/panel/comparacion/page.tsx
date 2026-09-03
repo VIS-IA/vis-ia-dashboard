@@ -1,5 +1,7 @@
-import { getDashboardData, getReputationDetail, getExperienceDetail } from "@/lib/queries";
+import { getDashboardData, getReputationDetail, getExperienceDetail, getClientPlan } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
+import UpgradeNotice from "@/components/UpgradeNotice";
+import { planAtLeast } from "@/lib/plan";
 import { ICON_MAP } from "@/lib/icons";
 import { ArrowUp, ArrowDown, TrendingUp } from "lucide-react";
 
@@ -53,11 +55,23 @@ function ChangeRow({
 }
 
 export default async function ComparacionPage() {
-  const [data, reputation, experience] = await Promise.all([
+  const [data, reputation, experience, plan] = await Promise.all([
     getDashboardData(),
     getReputationDetail(),
     getExperienceDetail(),
+    getClientPlan(),
   ]);
+
+  if (!planAtLeast(plan, "pro")) {
+    return (
+      <PanelLayout
+        title="Comparación Completa"
+        subtitle="Antes y después de tu negocio, reporte a reporte"
+      >
+        <UpgradeNotice feature="La comparación completa" minPlan="pro" />
+      </PanelLayout>
+    );
+  }
 
   if (!data) {
     return (

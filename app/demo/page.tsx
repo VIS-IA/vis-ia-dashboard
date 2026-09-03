@@ -159,7 +159,7 @@ export default function DemoPage() {
           Quiero esto para mi negocio →
         </Link>
       </div>
-      <VisIaPanelInicio data={DEMO_DATA} />
+      <VisIaPanelInicio data={DEMO_DATA} plan="intelligence" />
     </div>
   );
 }

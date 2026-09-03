@@ -1,16 +1,19 @@
-import { getDashboardData, getOnboardingStatus, getReportHistory } from "@/lib/queries";
+import { getDashboardData, getOnboardingStatus, getReportHistory, getClientPlan } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import ScoreGauge from "@/components/ScoreGauge";
 import ScoreTimelineChart from "@/components/ScoreTimelineChart";
+import UpgradeNotice from "@/components/UpgradeNotice";
+import { planAtLeast } from "@/lib/plan";
 import { ArrowUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function VisScorePage() {
-  const [data, onboarding, history] = await Promise.all([
+  const [data, onboarding, history, plan] = await Promise.all([
     getDashboardData(),
     getOnboardingStatus(),
     getReportHistory(),
+    getClientPlan(),
   ]);
 
   if (!data) {
@@ -75,7 +78,9 @@ export default async function VisScorePage() {
         </div>
       </div>
 
-      {scoredHistory.length >= 2 ? (
+      {!planAtLeast(plan, "pro") ? (
+        <UpgradeNotice feature="Ver la evolución de tu VIS Score en el tiempo" minPlan="pro" />
+      ) : scoredHistory.length >= 2 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-2xl">
           <p className="text-sm font-semibold text-slate-800 mb-4">
             Evolución del VIS Score

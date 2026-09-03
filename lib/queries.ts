@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import type { PlanTier } from "@/lib/plan";
 import type {
   DashboardData,
   DashboardMetric,
@@ -604,5 +605,30 @@ export async function getTourCompleted(): Promise<boolean> {
     return client?.tour_completed ?? true;
   } catch {
     return true;
+  }
+}
+
+/**
+ * El plan del cliente actual (diagnostic/pro/intelligence) — decide
+ * qué secciones del panel puede ver. Si algo falla o no hay sesión,
+ * se asume el plan más restrictivo (diagnostic) por seguridad.
+ */
+export async function getClientPlan(): Promise<PlanTier> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return "diagnostic";
+
+    const { data: client } = await supabase
+      .from("clients")
+      .select("plan")
+      .eq("user_id", user.id)
+      .single();
+
+    return (client?.plan as PlanTier) ?? "diagnostic";
+  } catch {
+    return "diagnostic";
   }
 }

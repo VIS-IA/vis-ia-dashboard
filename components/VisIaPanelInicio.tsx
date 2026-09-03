@@ -20,6 +20,7 @@ import { ICON_MAP } from "@/lib/icons";
 import { PanelSidebar } from "@/components/PanelLayout";
 import ScoreGauge from "@/components/ScoreGauge";
 import NotificationsBell from "@/components/NotificationsBell";
+import { planAtLeast, type PlanTier } from "@/lib/plan";
 import type { DashboardData } from "@/lib/types";
 
 /**
@@ -74,10 +75,14 @@ function Stars({ rating }: { rating: number }) {
 export default function VisIaPanelInicio({
   data: d,
   onboardingCompleted = false,
+  plan = "diagnostic",
 }: {
   data: DashboardData;
   onboardingCompleted?: boolean;
+  plan?: PlanTier;
 }) {
+  const canCompare = planAtLeast(plan, "pro");
+
   function downloadReport() {
     const lines = [
       `VIS IA — Reporte de ${d.business.name}`,
@@ -172,7 +177,7 @@ export default function VisIaPanelInicio({
               <Download size={15} /> <span className="hidden sm:inline">Descargar reporte</span>
             </button>
             <div className="order-2 lg:order-3">
-              <NotificationsBell />
+              {canCompare && <NotificationsBell />}
             </div>
             <div className="order-4 flex items-center gap-2">
               <div className="w-9 h-9 rounded-full bg-slate-200 shrink-0" />
@@ -319,12 +324,18 @@ export default function VisIaPanelInicio({
                   ¿Qué cambió desde tu último análisis?
                 </h2>
               </div>
-              <Link
-                href="/panel/comparacion"
-                className="text-xs text-blue-600 font-medium flex items-center gap-1"
-              >
-                Ver comparación completa <ChevronRight size={13} />
-              </Link>
+              {canCompare ? (
+                <Link
+                  href="/panel/comparacion"
+                  className="text-xs text-blue-600 font-medium flex items-center gap-1"
+                >
+                  Ver comparación completa <ChevronRight size={13} />
+                </Link>
+              ) : (
+                <span className="text-xs text-slate-400 flex items-center gap-1">
+                  Comparación completa — disponible en PRO
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

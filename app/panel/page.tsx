@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ClipboardList, ChevronRight } from "lucide-react";
-import { getDashboardData, getOnboardingStatus, getTourCompleted } from "@/lib/queries";
+import { getDashboardData, getOnboardingStatus, getTourCompleted, getClientPlan } from "@/lib/queries";
 import VisIaPanelInicio from "@/components/VisIaPanelInicio";
 import PanelLayout from "@/components/PanelLayout";
 import WelcomeTour from "@/components/WelcomeTour";
@@ -9,10 +9,11 @@ import WelcomeTour from "@/components/WelcomeTour";
 export const dynamic = "force-dynamic";
 
 export default async function PanelPage() {
-  const [data, onboarding, tourCompleted] = await Promise.all([
+  const [data, onboarding, tourCompleted, plan] = await Promise.all([
     getDashboardData(),
     getOnboardingStatus(),
     getTourCompleted(),
+    getClientPlan(),
   ]);
 
   if (!data) {
@@ -64,7 +65,7 @@ export default async function PanelPage() {
           <ChevronRight size={16} />
         </Link>
       )}
-      <VisIaPanelInicio data={data} onboardingCompleted={onboarding.completed} />
+      <VisIaPanelInicio data={data} onboardingCompleted={onboarding.completed} plan={plan} />
     </div>
   );
 }
