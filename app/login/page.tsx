@@ -12,12 +12,19 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!accepted) {
+      setError("Debes aceptar los Términos de Servicio y la Política de Privacidad para continuar.");
+      return;
+    }
+
     setLoading(true);
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -25,11 +32,18 @@ export default function LoginPage() {
       password,
     });
 
-    setLoading(false);
-
     if (signInError) {
+      setLoading(false);
       setError("Correo o contraseña incorrectos.");
       return;
+    }
+
+    // Queda registrado con fecha en la cuenta del cliente — no bloquea
+    // el ingreso si falla, solo intenta guardar la constancia.
+    try {
+      await supabase.rpc("record_terms_acceptance");
+    } catch {
+      // No pasa nada si falla — no bloquea el acceso al panel.
     }
 
     router.push("/panel");
@@ -90,6 +104,34 @@ export default function LoginPage() {
             />
           </div>
 
+          <label className="flex items-start gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={accepted}
+              onChange={(e) => setAccepted(e.target.checked)}
+              className="mt-0.5 shrink-0"
+            />
+            <span className="text-xs text-slate-500 leading-relaxed">
+              He leído y acepto los{" "}
+              <Link
+                href="/terminos"
+                target="_blank"
+                className="underline hover:text-slate-700"
+              >
+                Términos de Servicio
+              </Link>{" "}
+              y la{" "}
+              <Link
+                href="/privacidad"
+                target="_blank"
+                className="underline hover:text-slate-700"
+              >
+                Política de Privacidad
+              </Link>
+              .
+            </span>
+          </label>
+
           {error && (
             <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
               {error}
@@ -98,24 +140,12 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg py-2.5"
+            disabled={loading || !accepted}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg py-2.5"
           >
             {loading ? "Ingresando…" : "Ingresar"}
           </button>
         </form>
-
-        <p className="text-center text-xs text-slate-400 mt-6">
-          Al ingresar, aceptas nuestros{" "}
-          <Link href="/terminos" className="underline hover:text-slate-600">
-            Términos de Servicio
-          </Link>{" "}
-          y{" "}
-          <Link href="/privacidad" className="underline hover:text-slate-600">
-            Política de Privacidad
-          </Link>
-          .
-        </p>
       </div>
     </div>
   );
