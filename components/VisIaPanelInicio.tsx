@@ -20,6 +20,7 @@ import { ICON_MAP } from "@/lib/icons";
 import { PanelSidebar } from "@/components/PanelLayout";
 import ScoreGauge from "@/components/ScoreGauge";
 import NotificationsBell from "@/components/NotificationsBell";
+import EconomicImpactSummary from "@/components/EconomicImpactSummary";
 import { planAtLeast, type PlanTier } from "@/lib/plan";
 import type { DashboardData } from "@/lib/types";
 
@@ -203,6 +204,9 @@ export default function VisIaPanelInicio({
               </p>
             </section>
           )}
+
+          {/* Impacto Económico — resumen agregado, clasificado por certeza */}
+          <EconomicImpactSummary perdidas={d.perdidas} oportunidades={d.oportunidades} />
 
           {/* Hero: VIS IA Intelligence */}
           <section className="bg-white rounded-2xl border border-slate-200 p-5 lg:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">

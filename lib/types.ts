@@ -34,6 +34,9 @@ export interface DashboardLoss {
   evidencia: string | null;
   causaProbable: string | null;
   nivelCerteza: CertaintyLevel | null;
+  montoEstimado: number | null;
+  moneda: string;
+  supuestos: string | null;
 }
 
 export interface DashboardOpportunity {
@@ -44,6 +47,9 @@ export interface DashboardOpportunity {
   evidencia: string | null;
   causaProbable: string | null;
   nivelCerteza: CertaintyLevel | null;
+  montoEstimado: number | null;
+  moneda: string;
+  supuestos: string | null;
 }
 
 export interface DashboardAction {

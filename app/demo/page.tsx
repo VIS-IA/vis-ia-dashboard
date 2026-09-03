@@ -86,7 +86,10 @@ const DEMO_DATA: DashboardData = {
       impacto: "Alto",
       evidencia: "6 reseñas de los últimos 2 meses mencionan demoras en la confirmación.",
       causaProbable: "Posible falta de un proceso claro de seguimiento a solicitudes.",
-      nivelCerteza: "Confirmado",
+      nivelCerteza: "Estimado",
+      montoEstimado: 850,
+      moneda: "USD",
+      supuestos: "6 reservas mencionadas en reseñas, con un ticket promedio estimado de $140 cada una.",
     },
     {
       icon_key: "thumbs-down",
@@ -97,6 +100,9 @@ const DEMO_DATA: DashboardData = {
       evidencia: "No es posible cuantificar cuántas reservas se pierden por esto.",
       causaProbable: "Señal de riesgo, no una pérdida confirmada.",
       nivelCerteza: "Potencial",
+      montoEstimado: null,
+      moneda: "USD",
+      supuestos: null,
     },
   ],
   oportunidades: [
@@ -108,6 +114,9 @@ const DEMO_DATA: DashboardData = {
       evidencia: null,
       causaProbable: null,
       nivelCerteza: null,
+      montoEstimado: null,
+      moneda: "USD",
+      supuestos: null,
     },
     {
       icon_key: "camera",
@@ -117,6 +126,9 @@ const DEMO_DATA: DashboardData = {
       evidencia: null,
       causaProbable: null,
       nivelCerteza: null,
+      montoEstimado: null,
+      moneda: "USD",
+      supuestos: null,
     },
   ],
   acciones: [

@@ -174,6 +174,9 @@ async function loadDashboardData(): Promise<DashboardData | null> {
       evidencia: p.evidencia ?? null,
       causaProbable: p.causa_probable ?? null,
       nivelCerteza: p.nivel_certeza ?? null,
+      montoEstimado: p.monto_estimado ?? null,
+      moneda: p.moneda ?? "USD",
+      supuestos: p.supuestos ?? null,
     })),
     oportunidades: (opportunities ?? []).map((o) => ({
       icon_key: o.icon_key,
@@ -183,6 +186,9 @@ async function loadDashboardData(): Promise<DashboardData | null> {
       evidencia: o.evidencia ?? null,
       causaProbable: o.causa_probable ?? null,
       nivelCerteza: o.nivel_certeza ?? null,
+      montoEstimado: o.monto_estimado ?? null,
+      moneda: o.moneda ?? "USD",
+      supuestos: o.supuestos ?? null,
     })),
     acciones: (actions ?? []).map((a) => ({
       texto: a.texto,

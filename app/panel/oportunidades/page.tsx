@@ -2,7 +2,8 @@ import { getDashboardData } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import { ICON_MAP } from "@/lib/icons";
 import ShareFindingButton from "@/components/ShareFindingButton";
-import { Sparkles, Search, GitBranch } from "lucide-react";
+import EconomicImpactCard from "@/components/EconomicImpactCard";
+import { Sparkles, GitBranch } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -92,17 +93,8 @@ export default async function OportunidadesPage() {
                     {o.nivelCerteza && <CertaintyPill level={o.nivelCerteza} />}
                   </div>
                 </div>
-                {(o.evidencia || o.causaProbable) && (
+                {(o.evidencia || o.causaProbable || o.nivelCerteza) && (
                   <div className="px-5 pb-5 space-y-3 border-t border-slate-100 pt-4">
-                    {o.evidencia && (
-                      <div className="flex gap-2.5">
-                        <Search size={14} className="text-blue-500 mt-0.5 shrink-0" />
-                        <p className="text-sm text-slate-600">
-                          <span className="font-medium text-slate-700">Evidencia: </span>
-                          {o.evidencia}
-                        </p>
-                      </div>
-                    )}
                     {o.causaProbable && (
                       <div className="flex gap-2.5">
                         <GitBranch size={14} className="text-purple-500 mt-0.5 shrink-0" />
@@ -112,6 +104,14 @@ export default async function OportunidadesPage() {
                         </p>
                       </div>
                     )}
+                    <EconomicImpactCard
+                      kind="oportunidad"
+                      montoEstimado={o.montoEstimado}
+                      moneda={o.moneda}
+                      supuestos={o.supuestos}
+                      evidencia={o.evidencia}
+                      nivelCerteza={o.nivelCerteza}
+                    />
                   </div>
                 )}
                 <div className="px-5 pb-4 pt-1 flex justify-end">
