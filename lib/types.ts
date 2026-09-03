@@ -101,6 +101,14 @@ export interface Competitor {
   isYou: boolean;
 }
 
+export interface OtherReputation {
+  platform: string;
+  rating: number;
+  scale: 5 | 10;
+  ratingOn5: number;
+  reviewCount: number | null;
+}
+
 export type QuestionResponseType =
   | "single_select"
   | "multi_select"

@@ -5,6 +5,7 @@ import type {
   ReputationDetail,
   ExperienceDetail,
   Competitor,
+  OtherReputation,
   OnboardingQuestion,
   OnboardingAnswerValue,
 } from "@/lib/types";
@@ -474,6 +475,36 @@ export async function getCompetitors(): Promise<Competitor[]> {
       reviewCount: c.review_count,
       notes: c.notes,
       isYou: c.is_you,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * "Otras reputaciones" — plataformas además de Google (Booking,
+ * TripAdvisor, Yelp, etc.), según el tipo de negocio. Google sigue
+ * siendo la reputación principal (tabla reputation_details); esto es
+ * un módulo complementario.
+ */
+export async function getOtherReputations(): Promise<OtherReputation[]> {
+  try {
+    const context = await getReportContext();
+    if (!context) return [];
+
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("other_reputations")
+      .select("*")
+      .eq("report_id", context.latestReportId)
+      .order("sort_order", { ascending: true });
+
+    return (data ?? []).map((r) => ({
+      platform: r.platform,
+      rating: r.rating,
+      scale: r.scale,
+      ratingOn5: r.scale === 10 ? r.rating / 2 : r.rating,
+      reviewCount: r.review_count,
     }));
   } catch {
     return [];
