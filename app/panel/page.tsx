@@ -1,21 +1,24 @@
 import Link from "next/link";
 import { ClipboardList, ChevronRight } from "lucide-react";
-import { getDashboardData, getOnboardingStatus } from "@/lib/queries";
+import { getDashboardData, getOnboardingStatus, getTourCompleted } from "@/lib/queries";
 import VisIaPanelInicio from "@/components/VisIaPanelInicio";
 import PanelLayout from "@/components/PanelLayout";
+import WelcomeTour from "@/components/WelcomeTour";
 
 // Always fetch fresh data — this is a live client report, not static content.
 export const dynamic = "force-dynamic";
 
 export default async function PanelPage() {
-  const [data, onboarding] = await Promise.all([
+  const [data, onboarding, tourCompleted] = await Promise.all([
     getDashboardData(),
     getOnboardingStatus(),
+    getTourCompleted(),
   ]);
 
   if (!data) {
     return (
       <PanelLayout title="Bienvenido a VIS IA">
+        {!tourCompleted && <WelcomeTour />}
         <div className="max-w-lg bg-white rounded-2xl border border-slate-200 p-8">
           <h1 className="text-lg font-semibold text-slate-900 mb-2">
             Aún no hay un análisis publicado
@@ -47,6 +50,7 @@ export default async function PanelPage() {
 
   return (
     <div>
+      {!tourCompleted && <WelcomeTour />}
       {!onboarding.completed && (
         <Link
           href="/panel/preguntas"

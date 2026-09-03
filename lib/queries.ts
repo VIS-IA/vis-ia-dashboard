@@ -581,3 +581,28 @@ export async function getOnboardingStatus(): Promise<OnboardingStatus> {
     return { completed: false, answers: {} };
   }
 }
+
+/**
+ * Whether the signed-in client has already seen the first-time
+ * welcome tour (separate from the 15 preguntas — this is just a UI
+ * walkthrough).
+ */
+export async function getTourCompleted(): Promise<boolean> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return true; // no molestar si algo falla al verificar
+
+    const { data: client } = await supabase
+      .from("clients")
+      .select("tour_completed")
+      .eq("user_id", user.id)
+      .single();
+
+    return client?.tour_completed ?? true;
+  } catch {
+    return true;
+  }
+}
