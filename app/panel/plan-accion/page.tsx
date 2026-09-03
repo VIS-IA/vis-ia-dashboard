@@ -110,16 +110,16 @@ export default async function PlanAccionPage() {
                 className="bg-white rounded-xl border border-slate-200 overflow-hidden"
               >
                 {/* Header */}
-                <div className="p-5 border-b border-slate-100 flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-semibold flex items-center justify-center shrink-0">
-                    {idx + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-semibold text-slate-900">
+                <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-start gap-3">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-semibold flex items-center justify-center shrink-0">
+                      {idx + 1}
+                    </div>
+                    <p className="text-base font-semibold text-slate-900 min-w-0 break-words">
                       {a.texto}
                     </p>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <div className="flex flex-row sm:flex-col items-start sm:items-end gap-1.5 shrink-0 pl-11 sm:pl-0">
                     <PriorityPill level={a.prioridad} />
                     {a.nivelCerteza && <CertaintyPill level={a.nivelCerteza} />}
                   </div>

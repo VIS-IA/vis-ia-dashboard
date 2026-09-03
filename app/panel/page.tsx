@@ -53,7 +53,7 @@ export default async function PanelPage() {
           className="flex items-center gap-3 bg-blue-600 text-white px-6 py-3 hover:bg-blue-700 transition-colors"
         >
           <ClipboardList size={16} />
-          <span className="text-sm font-medium flex-1">
+          <span className="text-sm font-medium flex-1 min-w-0">
             Nos faltan tus respuestas a las 15 preguntas sobre tu negocio —
             tómate unos minutos para completarlas
           </span>

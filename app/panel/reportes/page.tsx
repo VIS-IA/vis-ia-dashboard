@@ -23,7 +23,7 @@ export default async function ReportesPage() {
               <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
                 <FileText size={16} className="text-blue-600" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-800">
                   Análisis del {r.analysisDate}
                 </p>

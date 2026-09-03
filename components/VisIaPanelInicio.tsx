@@ -367,7 +367,7 @@ export default function VisIaPanelInicio({
                       <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center shrink-0">
                         <Icon size={15} className="text-red-500" />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-800">
                           {p.titulo}
                         </p>
@@ -404,7 +404,7 @@ export default function VisIaPanelInicio({
                       <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
                         <Icon size={15} className="text-emerald-500" />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-800">
                           {o.titulo}
                         </p>

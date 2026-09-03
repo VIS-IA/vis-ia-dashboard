@@ -55,18 +55,20 @@ export default async function OportunidadesPage() {
                 key={idx}
                 className="bg-white rounded-xl border border-slate-200 overflow-hidden"
               >
-                <div className="p-5 flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
-                    <Icon size={18} className="text-emerald-500" />
+                <div className="p-5 flex flex-col sm:flex-row sm:items-start gap-4">
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                      <Icon size={18} className="text-emerald-500" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-800">
+                        {o.titulo}
+                      </p>
+                      <p className="text-sm text-slate-500 mt-1">{o.descripcion}</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-800">
-                      {o.titulo}
-                    </p>
-                    <p className="text-sm text-slate-500 mt-1">{o.descripcion}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <div className="text-right">
+                  <div className="flex flex-row sm:flex-col items-center sm:items-end gap-3 sm:gap-1.5 shrink-0 pl-14 sm:pl-0">
+                    <div className="text-left sm:text-right">
                       <p className="text-[11px] text-slate-400">Potencial</p>
                       <p
                         className={`text-sm font-semibold ${
