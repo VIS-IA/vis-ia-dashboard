@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import PanelLayout from "@/components/PanelLayout";
 import SignOutButton from "@/components/SignOutButton";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,14 @@ export default async function MiCuentaPage() {
         )}
         <div className="pt-2 border-t border-slate-100">
           <SignOutButton />
+        </div>
+        <div className="pt-2 border-t border-slate-100 flex gap-4 text-xs text-slate-400">
+          <Link href="/terminos" className="hover:text-slate-600 underline">
+            Términos de Servicio
+          </Link>
+          <Link href="/privacidad" className="hover:text-slate-600 underline">
+            Política de Privacidad
+          </Link>
         </div>
       </div>
     </PanelLayout>

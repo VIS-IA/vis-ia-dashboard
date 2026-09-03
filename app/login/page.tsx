@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -103,6 +104,18 @@ export default function LoginPage() {
             {loading ? "Ingresando…" : "Ingresar"}
           </button>
         </form>
+
+        <p className="text-center text-xs text-slate-400 mt-6">
+          Al ingresar, aceptas nuestros{" "}
+          <Link href="/terminos" className="underline hover:text-slate-600">
+            Términos de Servicio
+          </Link>{" "}
+          y{" "}
+          <Link href="/privacidad" className="underline hover:text-slate-600">
+            Política de Privacidad
+          </Link>
+          .
+        </p>
       </div>
     </div>
   );
