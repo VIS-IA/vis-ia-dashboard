@@ -1,10 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import Link from "next/link";
+
+const PROCESSING_MESSAGES = [
+  "Verificando tu cuenta…",
+  "Conectando con tu panel VIS IA…",
+  "Cargando tu último análisis…",
+  "Casi listo…",
+];
+
+function ProcessingScreen() {
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMessageIndex((i) => Math.min(i + 1, PROCESSING_MESSAGES.length - 1));
+    }, 900);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center px-4">
+      <div className="flex flex-col items-center">
+        <Image
+          src="/logo-vis-ia.png"
+          alt="VIS IA Federal Consulting"
+          width={80}
+          height={80}
+          className="mb-6"
+        />
+        <div className="w-8 h-8 border-[3px] border-slate-200 border-t-blue-600 rounded-full animate-spin mb-4" />
+        <p className="text-sm text-slate-500">{PROCESSING_MESSAGES[messageIndex]}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +49,7 @@ export default function LoginPage() {
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,8 +81,18 @@ export default function LoginPage() {
       // No pasa nada si falla — no bloquea el acceso al panel.
     }
 
-    router.push("/panel");
-    router.refresh();
+    // Pantalla de "procesando" antes de entrar al panel — le da al
+    // cliente la sensación de que algo real está ocurriendo, en vez
+    // de saltar de golpe.
+    setProcessing(true);
+    setTimeout(() => {
+      router.push("/panel");
+      router.refresh();
+    }, 3600);
+  }
+
+  if (processing) {
+    return <ProcessingScreen />;
   }
 
   return (
