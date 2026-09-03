@@ -145,6 +145,7 @@ async function loadDashboardData(): Promise<DashboardData | null> {
       role: "Cliente",
     },
     lastAnalysis: formattedDate(report.analysis_date),
+    resumenEjecutivo: report.resumen_ejecutivo ?? null,
     nextAnalysis: formattedDate(nextAnalysisDate.toISOString()),
     visScore: {
       current: report.vis_score_current,

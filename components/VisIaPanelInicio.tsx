@@ -187,6 +187,18 @@ export default function VisIaPanelInicio({
         </header>
 
         <div className="p-4 lg:p-8 space-y-6">
+          {/* Resumen ejecutivo */}
+          {d.resumenEjecutivo && (
+            <section className="bg-slate-900 text-white rounded-2xl p-5 lg:p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">
+                Resumen ejecutivo
+              </p>
+              <p className="text-sm lg:text-base leading-relaxed text-slate-100">
+                {d.resumenEjecutivo}
+              </p>
+            </section>
+          )}
+
           {/* Hero: VIS IA Intelligence */}
           <section className="bg-white rounded-2xl border border-slate-200 p-5 lg:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Score */}

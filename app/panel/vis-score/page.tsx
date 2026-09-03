@@ -1,14 +1,16 @@
-import { getDashboardData, getOnboardingStatus } from "@/lib/queries";
+import { getDashboardData, getOnboardingStatus, getReportHistory } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import ScoreGauge from "@/components/ScoreGauge";
+import ScoreTimelineChart from "@/components/ScoreTimelineChart";
 import { ArrowUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function VisScorePage() {
-  const [data, onboarding] = await Promise.all([
+  const [data, onboarding, history] = await Promise.all([
     getDashboardData(),
     getOnboardingStatus(),
+    getReportHistory(),
   ]);
 
   if (!data) {
@@ -38,12 +40,18 @@ export default async function VisScorePage() {
     );
   }
 
+  const scoredHistory = history
+    .filter((r) => r.visScoreCurrent !== null)
+    .slice()
+    .reverse()
+    .map((r) => ({ date: r.analysisDate, score: r.visScoreCurrent as number }));
+
   return (
     <PanelLayout
       title="VIS Score"
       subtitle={`Último análisis: ${data.lastAnalysis}`}
     >
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-xl flex items-center gap-8">
+      <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-xl flex items-center gap-8 mb-6">
         <ScoreGauge score={data.visScore.current} size={190} />
         <div>
           <span className="bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-full inline-block">
@@ -67,11 +75,20 @@ export default async function VisScorePage() {
         </div>
       </div>
 
-      <p className="text-xs text-slate-400 mt-4 max-w-xl">
-        El historial completo de tu VIS Score a través del tiempo aparecerá
-        aquí a medida que se publiquen más reportes. Puedes ver todos tus
-        reportes anteriores en la sección "Reportes".
-      </p>
+      {scoredHistory.length >= 2 ? (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-2xl">
+          <p className="text-sm font-semibold text-slate-800 mb-4">
+            Evolución del VIS Score
+          </p>
+          <ScoreTimelineChart points={scoredHistory} />
+        </div>
+      ) : (
+        <p className="text-xs text-slate-400 max-w-xl">
+          El historial completo de tu VIS Score a través del tiempo aparecerá
+          aquí a medida que se publiquen más reportes. Puedes ver todos tus
+          reportes anteriores en la sección "Reportes".
+        </p>
+      )}
     </PanelLayout>
   );
 }

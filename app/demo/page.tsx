@@ -19,6 +19,8 @@ const DEMO_DATA: DashboardData = {
   },
   user: { name: "Visitante", role: "Demo" },
   lastAnalysis: "30 de agosto de 2026",
+  resumenEjecutivo:
+    "Bistro El Manantial mejoró su reputación este mes, pero el hallazgo principal es que las reservas tardan demasiado en confirmarse — esto está generando fricción con clientes potenciales antes de que lleguen a probar el servicio.",
   nextAnalysis: "30 de septiembre de 2026",
   visScore: {
     current: 68,

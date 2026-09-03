@@ -150,6 +150,7 @@ export interface DashboardData {
     role: string;
   };
   lastAnalysis: string;
+  resumenEjecutivo: string | null;
   nextAnalysis: string;
   visScore: {
     current: number | null;
