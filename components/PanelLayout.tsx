@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -13,6 +14,8 @@ import {
   FileText,
   UserCircle,
   ClipboardList,
+  Menu,
+  X,
 } from "lucide-react";
 
 // Número de WhatsApp del negocio, en formato internacional sin signos:
@@ -36,23 +39,39 @@ export const NAV_ITEMS = [
   { icon: UserCircle, label: "Mi Cuenta", href: "/panel/mi-cuenta" },
 ];
 
+/**
+ * PanelSidebar
+ * -------------
+ * Desktop: barra lateral fija, siempre visible (como antes).
+ * Celular: se esconde fuera de pantalla; un botón de hamburguesa en
+ * una barra superior la despliega encima del contenido, con un fondo
+ * oscuro detrás que la cierra al tocarlo.
+ */
 export function PanelSidebar() {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
 
-  return (
-    <aside className="w-64 shrink-0 bg-[#0b1220] text-slate-300 flex flex-col justify-between">
+  const sidebarContent = (
+    <>
       <div>
-        <div className="px-6 py-6 border-b border-white/10 flex items-center justify-center">
+        <div className="px-6 py-6 border-b border-white/10 flex items-center justify-between lg:justify-center">
           <div className="bg-white rounded-xl p-2">
             <Image
               src="/logo-vis-ia.png"
               alt="VIS IA Federal Consulting"
               width={140}
               height={140}
-              className="w-full h-auto"
+              className="w-full h-auto max-w-[120px] lg:max-w-none"
               priority
             />
           </div>
+          <button
+            onClick={() => setOpen(false)}
+            className="lg:hidden text-slate-400 p-2"
+            aria-label="Cerrar menú"
+          >
+            <X size={22} />
+          </button>
         </div>
 
         <nav className="px-3 py-4 space-y-1">
@@ -62,6 +81,7 @@ export function PanelSidebar() {
               <Link
                 key={label}
                 href={href}
+                onClick={() => setOpen(false)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                   active
                     ? "bg-blue-600 text-white font-medium"
@@ -90,7 +110,47 @@ export function PanelSidebar() {
           Soporte VIS IA
         </a>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Barra superior solo en celular */}
+      <div className="lg:hidden sticky top-0 z-30 bg-[#0b1220] text-white flex items-center justify-between px-4 py-3">
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="Abrir menú"
+          className="p-1.5 -ml-1.5"
+        >
+          <Menu size={22} />
+        </button>
+        <div className="flex items-baseline gap-1">
+          <span className="font-bold text-base tracking-tight">VIS</span>
+          <span className="text-blue-400 font-bold text-base tracking-tight">IA</span>
+        </div>
+        <div className="w-8" />
+      </div>
+
+      {/* Fondo oscuro al abrir el menú en celular */}
+      {open && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      {/* Sidebar: fijo en desktop, deslizable en celular */}
+      <aside
+        className={`
+          w-72 lg:w-64 shrink-0 bg-[#0b1220] text-slate-300 flex flex-col justify-between
+          fixed lg:static inset-y-0 left-0 z-50
+          transform transition-transform duration-200 ease-in-out
+          ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0
+        `}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   );
 }
 
@@ -109,14 +169,14 @@ export default function PanelLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen w-full bg-slate-50 flex text-slate-800">
+    <div className="min-h-screen w-full bg-slate-50 flex flex-col lg:flex-row text-slate-800">
       <PanelSidebar />
       <main className="flex-1 min-w-0">
-        <header className="bg-white border-b border-slate-200 px-8 py-5">
+        <header className="bg-white border-b border-slate-200 px-4 py-4 lg:px-8 lg:py-5">
           <h1 className="text-lg font-semibold text-slate-900">{title}</h1>
           {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
         </header>
-        <div className="p-8">{children}</div>
+        <div className="p-4 lg:p-8">{children}</div>
       </main>
     </div>
   );

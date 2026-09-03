@@ -136,24 +136,24 @@ export default function VisIaPanelInicio({
   }
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 flex text-slate-800">
+    <div className="min-h-screen w-full bg-slate-50 flex flex-col lg:flex-row text-slate-800">
       {/* Sidebar */}
       <PanelSidebar />
 
       {/* Main content */}
       <main className="flex-1 min-w-0">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between">
+        <header className="bg-white border-b border-slate-200 px-4 py-4 lg:px-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-slate-200 flex items-center justify-center text-slate-500 font-semibold text-lg overflow-hidden">
+            <div className="w-14 h-14 rounded-xl bg-slate-200 flex items-center justify-center text-slate-500 font-semibold text-lg overflow-hidden shrink-0">
               {d.business.logoInitial}
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-semibold text-slate-900">
+                <h1 className="text-lg font-semibold text-slate-900 truncate">
                   {d.business.name}
                 </h1>
-                <CheckSquare size={16} className="text-emerald-500" />
+                <CheckSquare size={16} className="text-emerald-500 shrink-0" />
               </div>
               <p className="text-sm text-slate-500">
                 {d.business.location} &nbsp;•&nbsp; ID: {d.business.visId}
@@ -164,22 +164,24 @@ export default function VisIaPanelInicio({
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="text-right">
+          <div className="flex items-center justify-between lg:justify-end gap-3 lg:gap-6 flex-wrap">
+            <div className="text-left lg:text-right order-3 lg:order-1 w-full lg:w-auto">
               <p className="text-xs text-slate-400">Último análisis</p>
               <p className="text-sm font-medium text-slate-700">{d.lastAnalysis}</p>
             </div>
             <button
               onClick={downloadReport}
-              className="flex items-center gap-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg px-4 py-2 hover:bg-slate-50"
+              className="order-1 lg:order-2 flex items-center gap-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg px-3 py-2 hover:bg-slate-50 whitespace-nowrap"
             >
-              <Download size={15} /> Descargar reporte
+              <Download size={15} /> <span className="hidden sm:inline">Descargar reporte</span>
             </button>
-            <NotificationsBell />
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-full bg-slate-200" />
-              <div>
-                <p className="text-sm font-medium text-slate-800">
+            <div className="order-2 lg:order-3">
+              <NotificationsBell />
+            </div>
+            <div className="order-4 flex items-center gap-2">
+              <div className="w-9 h-9 rounded-full bg-slate-200 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-800 truncate">
                   Hola, {d.user.name}
                 </p>
                 <p className="text-xs text-slate-400">{d.user.role}</p>
@@ -188,9 +190,9 @@ export default function VisIaPanelInicio({
           </div>
         </header>
 
-        <div className="p-8 space-y-6">
+        <div className="p-4 lg:p-8 space-y-6">
           {/* Hero: VIS IA Intelligence */}
-          <section className="bg-white rounded-2xl border border-slate-200 p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <section className="bg-white rounded-2xl border border-slate-200 p-5 lg:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Score */}
             <div>
               <p className="text-blue-600 font-semibold text-sm mb-3">
