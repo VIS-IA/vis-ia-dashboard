@@ -21,10 +21,15 @@ const config: Config = {
           "14%": { boxShadow: "0 0 0 10px rgba(16,185,129,0)" },
           "42%": { boxShadow: "0 0 0 6px rgba(16,185,129,0)" },
         },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(4px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "heartbeat-scale": "heartbeat-scale 1.8s ease-in-out infinite",
         "heartbeat-glow": "heartbeat-glow 1.8s ease-in-out infinite",
+        "fade-in": "fade-in 0.35s ease-out",
       },
     },
   },

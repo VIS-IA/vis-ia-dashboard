@@ -7,25 +7,37 @@ import Image from "next/image";
 import Link from "next/link";
 
 const PROCESSING_MESSAGES = [
-  "Verificando tu cuenta…",
-  "Conectando con tu panel VIS IA…",
-  "Cargando tu último análisis…",
-  "Casi listo…",
+  "Verificando acceso…",
+  "Analizando credenciales",
+  "Preparando tu VIS Intelligence Center…",
+  "Cargando información de tu empresa…",
 ];
+
+const TOTAL_DURATION_MS = 4400;
+const MESSAGE_INTERVAL_MS = TOTAL_DURATION_MS / PROCESSING_MESSAGES.length;
 
 function ProcessingScreen() {
   const [messageIndex, setMessageIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const messageTimer = setInterval(() => {
       setMessageIndex((i) => Math.min(i + 1, PROCESSING_MESSAGES.length - 1));
-    }, 900);
-    return () => clearInterval(interval);
+    }, MESSAGE_INTERVAL_MS);
+
+    // Arranca la barra de progreso en el siguiente frame para que la
+    // transición CSS de 0% -> 100% se anime en vez de aparecer llena.
+    const raf = requestAnimationFrame(() => setProgress(100));
+
+    return () => {
+      clearInterval(messageTimer);
+      cancelAnimationFrame(raf);
+    };
   }, []);
 
   return (
     <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center px-4">
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center w-full max-w-xs">
         <Image
           src="/logo-vis-ia.png"
           alt="VIS IA Federal Consulting"
@@ -33,8 +45,22 @@ function ProcessingScreen() {
           height={80}
           className="mb-6"
         />
-        <div className="w-8 h-8 border-[3px] border-slate-200 border-t-blue-600 rounded-full animate-spin mb-4" />
-        <p className="text-sm text-slate-500">{PROCESSING_MESSAGES[messageIndex]}</p>
+        <div className="w-8 h-8 border-[3px] border-slate-200 border-t-blue-600 rounded-full animate-spin mb-5" />
+        <p
+          key={messageIndex}
+          className="text-sm text-slate-600 font-medium mb-5 animate-fade-in text-center"
+        >
+          {PROCESSING_MESSAGES[messageIndex]}
+        </p>
+        <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-blue-600 rounded-full transition-all ease-linear"
+            style={{
+              width: `${progress}%`,
+              transitionDuration: `${TOTAL_DURATION_MS}ms`,
+            }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -88,7 +114,7 @@ export default function LoginPage() {
     setTimeout(() => {
       router.push("/panel");
       router.refresh();
-    }, 3600);
+    }, TOTAL_DURATION_MS);
   }
 
   if (processing) {
