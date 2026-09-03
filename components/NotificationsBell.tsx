@@ -24,14 +24,20 @@ export default function NotificationsBell() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setLoaded(true);
+        return;
+      }
 
       const { data: client } = await supabase
         .from("clients")
         .select("id")
         .eq("user_id", user.id)
         .single();
-      if (!client) return;
+      if (!client) {
+        setLoaded(true);
+        return;
+      }
 
       const { data } = await supabase
         .from("notifications")

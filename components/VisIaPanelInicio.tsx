@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Shield,
   Download,
-  ExternalLink,
   Calendar,
   Users,
 } from "lucide-react";
@@ -158,9 +157,6 @@ export default function VisIaPanelInicio({
               <p className="text-sm text-slate-500">
                 {d.business.location} &nbsp;•&nbsp; ID: {d.business.visId}
               </p>
-              <span className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                Perfil público — próximamente <ExternalLink size={11} />
-              </span>
             </div>
           </div>
 
