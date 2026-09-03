@@ -1,6 +1,7 @@
 import { getDashboardData } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import { ICON_MAP } from "@/lib/icons";
+import ShareFindingButton from "@/components/ShareFindingButton";
 import { Sparkles, Search, GitBranch } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +51,16 @@ export default async function OportunidadesPage() {
         <div className="space-y-4 max-w-2xl">
           {data.oportunidades.map((o, idx) => {
             const Icon = ICON_MAP[o.icon_key] ?? Sparkles;
+            const shareText = [
+              `VALOR OCULTO — ${data.business.name}`,
+              o.titulo,
+              o.descripcion,
+              o.evidencia ? `Evidencia: ${o.evidencia}` : null,
+              o.causaProbable ? `Por qué existe: ${o.causaProbable}` : null,
+              `Potencial: ${o.potencial}${o.nivelCerteza ? ` (Certeza: ${o.nivelCerteza})` : ""}`,
+            ]
+              .filter(Boolean)
+              .join("\n");
             return (
               <div
                 key={idx}
@@ -103,6 +114,9 @@ export default async function OportunidadesPage() {
                     )}
                   </div>
                 )}
+                <div className="px-5 pb-4 pt-1 flex justify-end">
+                  <ShareFindingButton title={o.titulo} text={shareText} />
+                </div>
               </div>
             );
           })}

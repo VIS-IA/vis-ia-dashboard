@@ -1,6 +1,7 @@
 import { getDashboardData } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import { ICON_MAP } from "@/lib/icons";
+import ShareFindingButton from "@/components/ShareFindingButton";
 import { Users, Search, GitBranch } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +51,16 @@ export default async function PerdidasPage() {
         <div className="space-y-4 max-w-2xl">
           {data.perdidas.map((p, idx) => {
             const Icon = ICON_MAP[p.icon_key] ?? Users;
+            const shareText = [
+              `PÉRDIDA INVISIBLE — ${data.business.name}`,
+              p.titulo,
+              p.descripcion,
+              p.evidencia ? `Evidencia: ${p.evidencia}` : null,
+              p.causaProbable ? `Causa probable: ${p.causaProbable}` : null,
+              `Impacto: ${p.impacto}${p.nivelCerteza ? ` (Certeza: ${p.nivelCerteza})` : ""}`,
+            ]
+              .filter(Boolean)
+              .join("\n");
             return (
               <div
                 key={idx}
@@ -99,6 +110,9 @@ export default async function PerdidasPage() {
                     )}
                   </div>
                 )}
+                <div className="px-5 pb-4 pt-1 flex justify-end">
+                  <ShareFindingButton title={p.titulo} text={shareText} />
+                </div>
               </div>
             );
           })}

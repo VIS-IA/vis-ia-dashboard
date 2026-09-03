@@ -1,5 +1,6 @@
 import { getDashboardData } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
+import ShareFindingButton from "@/components/ShareFindingButton";
 import {
   AlertTriangle,
   Search,
@@ -104,6 +105,20 @@ export default async function PlanAccionPage() {
             const hasFullStructure =
               a.problema || a.evidencia || a.causaProbable || a.nivelCerteza;
 
+            const shareText = [
+              `PLAN DE ACCIÓN — ${data.business.name}`,
+              a.texto,
+              a.problema ? `Problema: ${a.problema}` : null,
+              a.evidencia ? `Evidencia: ${a.evidencia}` : null,
+              a.causaProbable ? `Causa probable: ${a.causaProbable}` : null,
+              a.detalle ? `Impacto: ${a.detalle}` : null,
+              a.nivelCerteza ? `Certeza: ${a.nivelCerteza}` : null,
+              a.metrica ? `Métrica de éxito: ${a.metrica}` : null,
+              `Prioridad: ${a.prioridad}`,
+            ]
+              .filter(Boolean)
+              .join("\n");
+
             return (
               <div
                 key={idx}
@@ -182,15 +197,21 @@ export default async function PlanAccionPage() {
                         {a.fechaRevision}
                       </Section>
                     )}
+                    <div className="flex justify-end pt-1">
+                      <ShareFindingButton title={a.texto} text={shareText} />
+                    </div>
                   </div>
                 ) : (
-                  a.detalle && (
-                    <div className="p-5">
-                      <p className="text-sm text-slate-500 leading-relaxed">
+                  <div className="p-5">
+                    {a.detalle && (
+                      <p className="text-sm text-slate-500 leading-relaxed mb-3">
                         {a.detalle}
                       </p>
+                    )}
+                    <div className="flex justify-end">
+                      <ShareFindingButton title={a.texto} text={shareText} />
                     </div>
-                  )
+                  </div>
                 )}
               </div>
             );
