@@ -1,6 +1,6 @@
 import { getReputationDetail, getOtherReputations } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
-import { Star, MessageSquare, CheckCircle2, AlertTriangle, Globe } from "lucide-react";
+import { Star, MessageSquare, AlertTriangle, Globe } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -147,23 +147,6 @@ export default async function ReputacionPage() {
               </div>
             )}
 
-            {/* Response rate — solo si hay evidencia */}
-            {detail.responseRatePercent !== null && (
-              <div className="bg-white rounded-xl border border-slate-200 p-6 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
-                  <CheckCircle2 size={18} className="text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {detail.responseRatePercent}% de reseñas respondidas
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Responder rápido mejora tu reputación
-                  </p>
-                </div>
-              </div>
-            )}
-
             {detail.unrespondedNegative !== null && detail.unrespondedNegative > 0 && (
               <div className="bg-white rounded-xl border border-slate-200 p-6 flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
@@ -181,6 +164,69 @@ export default async function ReputacionPage() {
             )}
           </div>
         </div>
+
+        {/* Response Management — gestión de respuesta a reseñas, con detección automática de abandono */}
+        {(detail.reviewsResponded !== null ||
+          detail.reviewsUnresponded !== null ||
+          detail.responseRatePercent !== null) && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Response Management
+              </p>
+            </div>
+
+            {detail.responseManagementSignal && (
+              <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-4 flex items-start gap-3">
+                <AlertTriangle size={16} className="text-red-600 mt-0.5 shrink-0" />
+                <p className="text-sm text-red-900">
+                  <span className="font-semibold">🔴 Fricción VIS — abandono de gestión de reputación:</span>{" "}
+                  la tasa de respuesta cayó de {detail.responseRatePercentPrevious}% a{" "}
+                  {detail.responseRatePercent}% frente al reporte anterior. Esto suele
+                  indicar un cambio operativo (menos personal, cambio de dueño, o
+                  descuido) que vale la pena investigar antes de que afecte más la
+                  reputación.
+                </p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {detail.reviewsResponded !== null && (
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                  <p className="text-[11px] text-slate-400 mb-1">Respondidas</p>
+                  <p className="text-xl font-bold text-emerald-600">{detail.reviewsResponded}</p>
+                </div>
+              )}
+              {detail.reviewsUnresponded !== null && (
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                  <p className="text-[11px] text-slate-400 mb-1">Sin responder</p>
+                  <p className="text-xl font-bold text-red-500">{detail.reviewsUnresponded}</p>
+                </div>
+              )}
+              {detail.responseRatePercent !== null && (
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                  <p className="text-[11px] text-slate-400 mb-1">Tasa de respuesta</p>
+                  <p className="text-xl font-bold text-slate-900">{detail.responseRatePercent}%</p>
+                  {detail.responseRatePercentPrevious !== null && (
+                    <p className="text-[11px] text-slate-400">
+                      Anterior: {detail.responseRatePercentPrevious}%
+                    </p>
+                  )}
+                </div>
+              )}
+              {detail.avgResponseTimeDays !== null && (
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                  <p className="text-[11px] text-slate-400 mb-1">Tiempo promedio</p>
+                  <p className="text-xl font-bold text-slate-900">
+                    {detail.avgResponseTimeDays.toFixed(1)}
+                    <span className="text-xs text-slate-400 font-normal"> días</span>
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Otras reputaciones */}
         {otherReputations.length > 0 && (

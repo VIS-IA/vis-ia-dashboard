@@ -360,13 +360,34 @@ export async function getReputationDetail(): Promise<ReputationDetail | null> {
     if (!context) return null;
 
     const supabase = createClient();
-    const { data } = await supabase
-      .from("reputation_details")
-      .select("*")
-      .eq("report_id", context.latestReportId)
-      .single();
+    const [{ data }, prev] = await Promise.all([
+      supabase
+        .from("reputation_details")
+        .select("*")
+        .eq("report_id", context.latestReportId)
+        .single(),
+      context.previousReportId
+        ? supabase
+            .from("reputation_details")
+            .select("response_rate_percent")
+            .eq("report_id", context.previousReportId)
+            .single()
+        : Promise.resolve({ data: null }),
+    ]);
 
     if (!data) return null;
+
+    const responseRatePercentPrevious = prev.data?.response_rate_percent ?? null;
+
+    // Fricción VIS — abandono de gestión de reputación: la tasa de
+    // respuesta cayó fuerte (20 puntos o más) o llegó a 0%, comparado
+    // con el reporte anterior. Cálculo automático, no un texto puesto
+    // a mano.
+    const responseManagementSignal =
+      data.response_rate_percent !== null &&
+      responseRatePercentPrevious !== null &&
+      (data.response_rate_percent === 0 ||
+        responseRatePercentPrevious - data.response_rate_percent >= 20);
 
     return {
       avgRating: data.avg_rating,
@@ -377,7 +398,12 @@ export async function getReputationDetail(): Promise<ReputationDetail | null> {
       neutralCount: data.neutral_count,
       negativeCount: data.negative_count,
       responseRatePercent: data.response_rate_percent,
+      responseRatePercentPrevious,
       unrespondedNegative: data.unresponded_negative,
+      reviewsResponded: data.reviews_responded,
+      reviewsUnresponded: data.reviews_unresponded,
+      avgResponseTimeDays: data.avg_response_time_days,
+      responseManagementSignal,
     };
   } catch {
     return null;

@@ -135,7 +135,13 @@ export interface ReputationDetail {
   neutralCount: number | null;
   negativeCount: number | null;
   responseRatePercent: number | null;
+  responseRatePercentPrevious: number | null;
   unrespondedNegative: number | null;
+  reviewsResponded: number | null;
+  reviewsUnresponded: number | null;
+  avgResponseTimeDays: number | null;
+  /** true cuando la tasa de respuesta cayó fuerte o llegó a 0 frente al reporte anterior */
+  responseManagementSignal: boolean;
 }
 
 export type EvidenceSourceType = "reviews_text" | "platform_score";

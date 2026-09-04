@@ -166,13 +166,25 @@ export default async function VisScorePage() {
         </div>
       </div>
 
-      {/* Principales señales VIS — reutiliza Pérdidas / Oportunidades / brecha de reputación ya calculada */}
-      {(data.perdidas.length > 0 || data.oportunidades.length > 0) && (
+      {/* Principales señales VIS — reutiliza Pérdidas / Oportunidades / Response Management ya calculados */}
+      {(data.perdidas.length > 0 ||
+        data.oportunidades.length > 0 ||
+        reputation?.responseManagementSignal) && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-2xl mb-6">
           <p className="text-sm font-semibold text-slate-800 mb-4">
             Principales señales VIS
           </p>
           <div className="space-y-3">
+            {reputation?.responseManagementSignal && (
+              <div className="flex items-start gap-2.5">
+                <span className="text-base leading-none">🔴</span>
+                <p className="text-sm text-slate-700">
+                  <span className="font-medium">Fricción:</span> abandono de gestión
+                  de reputación — la tasa de respuesta a reseñas cayó de{" "}
+                  {reputation.responseRatePercentPrevious}% a {reputation.responseRatePercent}%
+                </p>
+              </div>
+            )}
             {data.perdidas.slice(0, 1).map((p, idx) => (
               <div key={`p-${idx}`} className="flex items-start gap-2.5">
                 <span className="text-base leading-none">🔴</span>
