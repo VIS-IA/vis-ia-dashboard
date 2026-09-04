@@ -46,6 +46,48 @@ export interface VisualEvidence {
   requiresHumanReview: boolean;
 }
 
+/**
+ * VIS Evidence Record — un registro de evidencia completo y trazable
+ * (no solo un número): una reseña real, con la respuesta del
+ * propietario, sus fotos asociadas, y la clasificación temporal que
+ * evita afirmar que una condición pasada sigue vigente hoy.
+ */
+export type ResolutionStatus = "yes" | "not_evident" | "unknown";
+export type TemporalStatus = "historical" | "current";
+
+export interface EvidenceRecordIssue {
+  category: string;
+  severity: ImpactLevel;
+}
+
+export interface EvidenceRecordPhoto {
+  evidenceType: VisualEvidenceType;
+  sourceUrl: string;
+  description: string;
+  category: string;
+  impact: ImpactLevel;
+  analysis: string;
+}
+
+export interface EvidenceRecord {
+  source: string;
+  sourceUrl: string;
+  author: string | null;
+  reviewDateLabel: string | null;
+  rating: number | null;
+  reviewText: string;
+  ownerResponse: string | null;
+  ownerResponseDateLabel: string | null;
+  resolutionDemonstrated: ResolutionStatus;
+  temporalStatus: TemporalStatus;
+  publicPersistence: boolean;
+  analysis: string;
+  confidence: CertaintyLevel | null;
+  requiresHumanReview: boolean;
+  issues: EvidenceRecordIssue[];
+  photos: EvidenceRecordPhoto[];
+}
+
 export interface DashboardLoss {
   icon_key: IconKey;
   titulo: string;

@@ -10,6 +10,7 @@ import type {
   OnboardingQuestion,
   OnboardingAnswerValue,
   VisualEvidence,
+  EvidenceRecord,
 } from "@/lib/types";
 
 /**
@@ -640,6 +641,71 @@ export async function getVisualEvidence(): Promise<VisualEvidence[]> {
       analysis: e.analysis,
       verified: e.verified,
       requiresHumanReview: e.requires_human_review,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * VIS Evidence Records — registros completos y trazables (reseña +
+ * respuesta del propietario + fotos + clasificación temporal), no
+ * solo un número. Cada uno trae sus "issues" (categorías con
+ * severidad) y sus fotos anidadas.
+ */
+export async function getEvidenceRecords(): Promise<EvidenceRecord[]> {
+  try {
+    const context = await getReportContext();
+    if (!context) return [];
+
+    const supabase = createClient();
+    const { data: records } = await supabase
+      .from("evidence_records")
+      .select("*")
+      .eq("report_id", context.latestReportId)
+      .order("sort_order", { ascending: true });
+
+    if (!records || records.length === 0) return [];
+
+    const recordIds = records.map((r) => r.id);
+
+    const [{ data: issues }, { data: photos }] = await Promise.all([
+      supabase.from("evidence_record_issues").select("*").in("evidence_record_id", recordIds),
+      supabase
+        .from("evidence_record_photos")
+        .select("*")
+        .in("evidence_record_id", recordIds)
+        .order("sort_order", { ascending: true }),
+    ]);
+
+    return records.map((r) => ({
+      source: r.source,
+      sourceUrl: r.source_url,
+      author: r.author,
+      reviewDateLabel: r.review_date_label,
+      rating: r.rating,
+      reviewText: r.review_text,
+      ownerResponse: r.owner_response,
+      ownerResponseDateLabel: r.owner_response_date_label,
+      resolutionDemonstrated: r.resolution_demonstrated,
+      temporalStatus: r.temporal_status,
+      publicPersistence: r.public_persistence,
+      analysis: r.analysis,
+      confidence: r.confidence,
+      requiresHumanReview: r.requires_human_review,
+      issues: (issues ?? [])
+        .filter((i) => i.evidence_record_id === r.id)
+        .map((i) => ({ category: i.category, severity: i.severity })),
+      photos: (photos ?? [])
+        .filter((p) => p.evidence_record_id === r.id)
+        .map((p) => ({
+          evidenceType: p.evidence_type,
+          sourceUrl: p.source_url,
+          description: p.description,
+          category: p.category,
+          impact: p.impact,
+          analysis: p.analysis,
+        })),
     }));
   } catch {
     return [];
