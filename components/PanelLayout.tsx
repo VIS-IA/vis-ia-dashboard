@@ -14,6 +14,7 @@ import {
   FileText,
   UserCircle,
   ClipboardList,
+  Camera,
   Menu,
   X,
 } from "lucide-react";
@@ -34,6 +35,7 @@ export const NAV_ITEMS = [
   { icon: Star, label: "Reputación", href: "/panel/reputacion" },
   { icon: Users, label: "Experiencia del Cliente", href: "/panel/experiencia" },
   { icon: BarChart3, label: "Competencia", href: "/panel/competencia" },
+  { icon: Camera, label: "Evidencia Visual", href: "/panel/evidencia" },
   { icon: CheckSquare, label: "Plan de Acción", href: "/panel/plan-accion" },
   { icon: FileText, label: "Reportes", href: "/panel/reportes" },
   { icon: UserCircle, label: "Mi Cuenta", href: "/panel/mi-cuenta" },

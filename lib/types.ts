@@ -26,6 +26,26 @@ export type CertaintyLevel =
   | "Potencial"
   | "No calculable";
 
+export type VisualEvidenceType = "photo" | "video";
+export type ImpactLevel = "low" | "medium" | "high" | "critical";
+
+/**
+ * Evidencia visual — nunca se descarga ni se guarda la imagen/video en
+ * sí, solo la referencia (source_url) a la fuente pública original.
+ * El cliente comprueba la evidencia directamente en su fuente.
+ */
+export interface VisualEvidence {
+  evidenceType: VisualEvidenceType;
+  source: string;
+  sourceUrl: string;
+  title: string;
+  impact: ImpactLevel;
+  category: string;
+  analysis: string;
+  verified: boolean;
+  requiresHumanReview: boolean;
+}
+
 export interface DashboardLoss {
   icon_key: IconKey;
   titulo: string;

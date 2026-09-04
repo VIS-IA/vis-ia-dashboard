@@ -9,6 +9,7 @@ import type {
   OtherReputation,
   OnboardingQuestion,
   OnboardingAnswerValue,
+  VisualEvidence,
 } from "@/lib/types";
 
 /**
@@ -608,5 +609,39 @@ export async function getClientPlan(): Promise<PlanTier> {
     return (client?.plan as PlanTier) ?? "diagnostic";
   } catch {
     return "diagnostic";
+  }
+}
+
+/**
+ * Evidencia visual (fotos/videos de fuentes públicas verificables).
+ * VIS IA nunca descarga ni almacena el archivo — solo la referencia
+ * (source_url) a la fuente original, para que el cliente la compruebe
+ * directamente ahí.
+ */
+export async function getVisualEvidence(): Promise<VisualEvidence[]> {
+  try {
+    const context = await getReportContext();
+    if (!context) return [];
+
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("visual_evidence")
+      .select("*")
+      .eq("report_id", context.latestReportId)
+      .order("sort_order", { ascending: true });
+
+    return (data ?? []).map((e) => ({
+      evidenceType: e.evidence_type,
+      source: e.source,
+      sourceUrl: e.source_url,
+      title: e.title,
+      impact: e.impact,
+      category: e.category,
+      analysis: e.analysis,
+      verified: e.verified,
+      requiresHumanReview: e.requires_human_review,
+    }));
+  } catch {
+    return [];
   }
 }
