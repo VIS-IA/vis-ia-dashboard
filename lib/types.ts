@@ -76,28 +76,33 @@ export interface ReputationDetail {
   unrespondedNegative: number | null;
 }
 
-export type ExperienceDetail =
-  | {
-      type: "negocio";
-      sentimentScore: number;
-      sentimentScorePrevious: number | null;
-      positiveMentions: number;
-      negativeMentions: number;
-      topTheme: string | null;
-    }
-  | {
-      type: "hotel";
-      cleanliness: number;
-      cleanlinessPrevious: number | null;
-      staff: number;
-      staffPrevious: number | null;
-      comfort: number;
-      comfortPrevious: number | null;
-      location: number;
-      locationPrevious: number | null;
-      valueForMoney: number;
-      valueForMoneyPrevious: number | null;
-    };
+export type EvidenceSourceType = "reviews_text" | "platform_score";
+
+/**
+ * Una "señal" de experiencia del cliente para una categoría (limpieza,
+ * servicio, check-in, etc.), con su origen explícito. Distingue los
+ * dos tipos de evidencia que VIS IA puede usar sin mezclarlas:
+ * - reviews_text: reseñas analizadas (Google, etc.) — conteos y patrón
+ * - platform_score: puntuación ya calculada por la plataforma (Booking, Expedia)
+ */
+export interface ExperienceSignal {
+  category: string;
+  source: string;
+  sourceType: EvidenceSourceType;
+  reviewsAnalyzed: number | null;
+  positiveMentions: number | null;
+  negativeMentions: number | null;
+  platformScore: number | null;
+  platformScoreScale: number | null;
+  evidence: string | null;
+  pattern: string | null;
+  confidence: CertaintyLevel | null;
+  analyzedAt: string | null;
+}
+
+export interface ExperienceDetail {
+  signals: ExperienceSignal[];
+}
 
 export interface Competitor {
   name: string;

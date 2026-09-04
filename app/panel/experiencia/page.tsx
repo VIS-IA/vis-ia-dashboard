@@ -1,47 +1,91 @@
 import { getExperienceDetail } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
-import { Users, ThumbsUp, ThumbsDown, MessageSquareText } from "lucide-react";
+import { Users, ThumbsUp, ThumbsDown, Globe, MessageSquareText } from "lucide-react";
+import type { ExperienceSignal } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-function DeltaTag({ current, previous }: { current: number; previous: number | null }) {
-  if (previous === null) {
-    return <span className="text-xs text-slate-400">Primer reporte</span>;
-  }
-  const diff = Math.round((current - previous) * 10) / 10;
-  if (diff === 0) return <span className="text-xs text-slate-400">Sin cambio</span>;
+function CertaintyPill({ level }: { level: string }) {
+  const styles: Record<string, string> = {
+    Confirmado: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    Medido: "bg-blue-50 text-blue-700 border-blue-200",
+    Estimado: "bg-amber-50 text-amber-700 border-amber-200",
+    Potencial: "bg-orange-50 text-orange-700 border-orange-200",
+    "No calculable": "bg-slate-100 text-slate-500 border-slate-200",
+  };
   return (
     <span
-      className={`text-xs font-semibold ${
-        diff > 0 ? "text-emerald-600" : "text-red-500"
+      className={`text-[11px] font-medium px-2 py-0.5 rounded-full border whitespace-nowrap ${
+        styles[level] || "bg-slate-100 text-slate-600 border-slate-200"
       }`}
     >
-      {diff > 0 ? "+" : ""}
-      {diff} vs. anterior
+      {level}
     </span>
   );
 }
 
-function SubratingBar({
-  label,
-  value,
-  previous,
-}: {
-  label: string;
-  value: number;
-  previous: number | null;
-}) {
+function SignalCard({ signal }: { signal: ExperienceSignal }) {
+  const isReviews = signal.sourceType === "reviews_text";
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5">
-      <p className="text-xs text-slate-500 mb-1">{label}</p>
-      <div className="flex items-baseline gap-2 mb-2">
-        <span className="text-2xl font-bold text-slate-900">{value.toFixed(1)}</span>
-        <span className="text-xs text-slate-400">/10</span>
+    <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2 min-w-0">
+          {isReviews ? (
+            <MessageSquareText size={14} className="text-blue-500 shrink-0" />
+          ) : (
+            <Globe size={14} className="text-purple-500 shrink-0" />
+          )}
+          <p className="text-xs font-medium text-slate-500 truncate">
+            {signal.source} · {isReviews ? "Reseñas analizadas" : "Puntuación de plataforma"}
+          </p>
+        </div>
+        {signal.confidence && <CertaintyPill level={signal.confidence} />}
       </div>
-      <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden mb-2">
-        <div className="h-full bg-blue-600" style={{ width: `${(value / 10) * 100}%` }} />
-      </div>
-      <DeltaTag current={value} previous={previous} />
+
+      {isReviews ? (
+        <div className="flex items-center gap-4 mb-2">
+          {signal.reviewsAnalyzed !== null && (
+            <span className="text-xs text-slate-500">
+              {signal.reviewsAnalyzed} reseñas analizadas
+            </span>
+          )}
+          {signal.positiveMentions !== null && (
+            <span className="text-xs text-emerald-600 flex items-center gap-1">
+              <ThumbsUp size={11} /> {signal.positiveMentions}
+            </span>
+          )}
+          {signal.negativeMentions !== null && (
+            <span className="text-xs text-red-500 flex items-center gap-1">
+              <ThumbsDown size={11} /> {signal.negativeMentions}
+            </span>
+          )}
+        </div>
+      ) : (
+        signal.platformScore !== null && (
+          <p className="text-2xl font-bold text-slate-900 mb-2">
+            {signal.platformScore.toFixed(1)}
+            <span className="text-xs text-slate-400 font-normal">
+              /{signal.platformScoreScale ?? 10}
+            </span>
+          </p>
+        )
+      )}
+
+      {signal.pattern && (
+        <p className="text-sm text-slate-700 mb-1">
+          <span className="font-medium">Patrón detectado: </span>
+          {signal.pattern}
+        </p>
+      )}
+      {signal.evidence && (
+        <p className="text-xs text-slate-500">{signal.evidence}</p>
+      )}
+      {signal.analyzedAt && (
+        <p className="text-[11px] text-slate-400 mt-2">
+          Analizado: {signal.analyzedAt}
+        </p>
+      )}
     </div>
   );
 }
@@ -49,7 +93,7 @@ function SubratingBar({
 export default async function ExperienciaPage() {
   const detail = await getExperienceDetail();
 
-  if (!detail) {
+  if (!detail || detail.signals.length === 0) {
     return (
       <PanelLayout title="Experiencia del Cliente">
         <div className="bg-white rounded-xl border border-slate-200 p-8 max-w-lg text-center">
@@ -65,99 +109,39 @@ export default async function ExperienciaPage() {
     );
   }
 
-  if (detail.type === "hotel") {
-    return (
-      <PanelLayout
-        title="Experiencia del Cliente"
-        subtitle="Subcalificaciones reales de Booking, Expedia y TripAdvisor"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl">
-          <SubratingBar
-            label="Limpieza"
-            value={detail.cleanliness}
-            previous={detail.cleanlinessPrevious}
-          />
-          <SubratingBar
-            label="Personal / Atención"
-            value={detail.staff}
-            previous={detail.staffPrevious}
-          />
-          <SubratingBar
-            label="Comodidad"
-            value={detail.comfort}
-            previous={detail.comfortPrevious}
-          />
-          <SubratingBar
-            label="Ubicación"
-            value={detail.location}
-            previous={detail.locationPrevious}
-          />
-          <SubratingBar
-            label="Relación calidad-precio"
-            value={detail.valueForMoney}
-            previous={detail.valueForMoneyPrevious}
-          />
-        </div>
-      </PanelLayout>
-    );
+  // Agrupar por categoría (Limpieza, Servicio, etc.)
+  const byCategory = new Map<string, ExperienceSignal[]>();
+  for (const s of detail.signals) {
+    const list = byCategory.get(s.category) ?? [];
+    list.push(s);
+    byCategory.set(s.category, list);
   }
 
   return (
     <PanelLayout
       title="Experiencia del Cliente"
-      subtitle="Qué tanto mencionan tu servicio y atención en las reseñas"
+      subtitle="Basado en fuentes públicas verificables — reseñas analizadas y puntuaciones de plataformas, sin mezclarlas"
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mb-4">
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-            <MessageSquareText size={14} className="text-blue-500" /> Puntaje de
-            sentimiento
+      <div className="space-y-6 max-w-3xl">
+        {Array.from(byCategory.entries()).map(([category, signals]) => (
+          <div key={category}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+              {category}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {signals.map((s, idx) => (
+                <SignalCard key={idx} signal={s} />
+              ))}
+            </div>
           </div>
-          <p className="text-2xl font-bold text-slate-900">
-            {detail.sentimentScore}
-            <span className="text-sm text-slate-400 font-normal">/100</span>
-          </p>
-          <div className="mt-1">
-            <DeltaTag
-              current={detail.sentimentScore}
-              previous={detail.sentimentScorePrevious}
-            />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-            <ThumbsUp size={14} className="text-emerald-500" /> Menciones
-            positivas del servicio
-          </div>
-          <p className="text-2xl font-bold text-slate-900">
-            {detail.positiveMentions}
-          </p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-            <ThumbsDown size={14} className="text-red-500" /> Menciones
-            negativas del servicio
-          </div>
-          <p className="text-2xl font-bold text-slate-900">
-            {detail.negativeMentions}
-          </p>
-        </div>
+        ))}
       </div>
 
-      {detail.topTheme && (
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 max-w-3xl">
-          <p className="text-sm text-blue-900">
-            <span className="font-semibold">Tema más mencionado:</span>{" "}
-            {detail.topTheme}
-          </p>
-        </div>
-      )}
-
-      <p className="text-xs text-slate-400 mt-4 max-w-3xl">
-        Este análisis se basa en lo que la gente escribe en sus reseñas
-        públicas (Google Maps, etc.), no en datos privados del negocio.
+      <p className="text-xs text-slate-400 mt-6 max-w-3xl">
+        Cada señal conserva su origen: las reseñas analizadas y las
+        puntuaciones publicadas por plataformas (Booking, Expedia, etc.)
+        son evidencia de distinto tipo y nunca se presentan como si fueran
+        lo mismo.
       </p>
     </PanelLayout>
   );

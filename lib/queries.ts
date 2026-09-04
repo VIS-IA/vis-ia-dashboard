@@ -384,11 +384,12 @@ export async function getReputationDetail(): Promise<ReputationDetail | null> {
 
 /**
  * Customer experience detail for the "Experiencia del Cliente" page.
- * Reads from a different table depending on the client's business
- * type — negocios normales (basado en menciones de servicio dentro
- * de reseñas) vs hoteles (subcalificaciones reales de Booking /
- * Expedia / TripAdvisor). "Previous" values come from the client's
- * previous report automatically, not typed by hand.
+ * Lee de experience_evidence: una tabla flexible que distingue dos
+ * tipos de evidencia por categoría (limpieza, servicio, etc.):
+ * - reviews_text: reseñas analizadas (Google, etc.)
+ * - platform_score: puntuación publicada por una plataforma (Booking, Expedia)
+ * Preparada para que estas señales lleguen algún día de investigación
+ * automática, sin cambiar la forma en que el panel las consume.
  */
 export async function getExperienceDetail(): Promise<ExperienceDetail | null> {
   try {
@@ -396,64 +397,35 @@ export async function getExperienceDetail(): Promise<ExperienceDetail | null> {
     if (!context) return null;
 
     const supabase = createClient();
+    const { data } = await supabase
+      .from("experience_evidence")
+      .select("*")
+      .eq("report_id", context.latestReportId)
+      .order("sort_order", { ascending: true });
 
-    if (context.businessType === "hotel") {
-      const [{ data: current }, prev] = await Promise.all([
-        supabase
-          .from("experience_hotel")
-          .select("*")
-          .eq("report_id", context.latestReportId)
-          .single(),
-        context.previousReportId
-          ? supabase
-              .from("experience_hotel")
-              .select("*")
-              .eq("report_id", context.previousReportId)
-              .single()
-          : Promise.resolve({ data: null }),
-      ]);
-
-      if (!current) return null;
-
-      return {
-        type: "hotel",
-        cleanliness: current.cleanliness,
-        cleanlinessPrevious: prev.data?.cleanliness ?? null,
-        staff: current.staff,
-        staffPrevious: prev.data?.staff ?? null,
-        comfort: current.comfort,
-        comfortPrevious: prev.data?.comfort ?? null,
-        location: current.location,
-        locationPrevious: prev.data?.location ?? null,
-        valueForMoney: current.value_for_money,
-        valueForMoneyPrevious: prev.data?.value_for_money ?? null,
-      };
-    }
-
-    const [{ data: current }, prev] = await Promise.all([
-      supabase
-        .from("experience_negocio")
-        .select("*")
-        .eq("report_id", context.latestReportId)
-        .single(),
-      context.previousReportId
-        ? supabase
-            .from("experience_negocio")
-            .select("*")
-            .eq("report_id", context.previousReportId)
-            .single()
-        : Promise.resolve({ data: null }),
-    ]);
-
-    if (!current) return null;
+    if (!data || data.length === 0) return null;
 
     return {
-      type: "negocio",
-      sentimentScore: current.sentiment_score,
-      sentimentScorePrevious: prev.data?.sentiment_score ?? null,
-      positiveMentions: current.positive_mentions,
-      negativeMentions: current.negative_mentions,
-      topTheme: current.top_theme,
+      signals: data.map((s) => ({
+        category: s.category,
+        source: s.source,
+        sourceType: s.source_type,
+        reviewsAnalyzed: s.reviews_analyzed,
+        positiveMentions: s.positive_mentions,
+        negativeMentions: s.negative_mentions,
+        platformScore: s.platform_score,
+        platformScoreScale: s.platform_score_scale,
+        evidence: s.evidence,
+        pattern: s.pattern,
+        confidence: s.confidence,
+        analyzedAt: s.analyzed_at
+          ? new Date(s.analyzed_at).toLocaleDateString("es-ES", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })
+          : null,
+      })),
     };
   } catch {
     return null;

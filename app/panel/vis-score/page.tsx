@@ -1,20 +1,32 @@
-import { getDashboardData, getOnboardingStatus, getReportHistory, getClientPlan } from "@/lib/queries";
+import {
+  getDashboardData,
+  getOnboardingStatus,
+  getReportHistory,
+  getClientPlan,
+  getReputationDetail,
+  getExperienceDetail,
+  getCompetitors,
+} from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import ScoreGauge from "@/components/ScoreGauge";
 import ScoreTimelineChart from "@/components/ScoreTimelineChart";
 import UpgradeNotice from "@/components/UpgradeNotice";
 import { planAtLeast } from "@/lib/plan";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Star, Users, Globe, BarChart3, AlertTriangle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function VisScorePage() {
-  const [data, onboarding, history, plan] = await Promise.all([
-    getDashboardData(),
-    getOnboardingStatus(),
-    getReportHistory(),
-    getClientPlan(),
-  ]);
+  const [data, onboarding, history, plan, reputation, experience, competitors] =
+    await Promise.all([
+      getDashboardData(),
+      getOnboardingStatus(),
+      getReportHistory(),
+      getClientPlan(),
+      getReputationDetail(),
+      getExperienceDetail(),
+      getCompetitors(),
+    ]);
 
   if (!data) {
     return (
@@ -77,6 +89,117 @@ export default async function VisScorePage() {
           )}
         </div>
       </div>
+
+      {/* ¿Por qué este Score? */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-2xl mb-6">
+        <p className="text-sm font-semibold text-slate-800 mb-4">
+          ¿Por qué este Score?
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+              <Star size={14} className="text-amber-500" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">Reputación</p>
+              <p className="text-sm text-slate-800">
+                {reputation
+                  ? `${reputation.avgRating.toFixed(1)}/5 en Google (${reputation.totalReviews} reseñas)`
+                  : "No calculable con la información disponible"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
+              <Users size={14} className="text-purple-500" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">Experiencia del Cliente</p>
+              <p className="text-sm text-slate-800">
+                {experience && experience.signals.length > 0
+                  ? `${experience.signals.length} señal${experience.signals.length > 1 ? "es" : ""} analizada${experience.signals.length > 1 ? "s" : ""}`
+                  : "No calculable con la información disponible"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+              <Globe size={14} className="text-blue-500" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">Presencia Digital</p>
+              <p className="text-sm text-slate-800">
+                No calculable con la información disponible
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+              <BarChart3 size={14} className="text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">Competitividad</p>
+              <p className="text-sm text-slate-800">
+                {competitors.length > 0
+                  ? `${competitors.length} competidor${competitors.length > 1 ? "es" : ""} comparado${competitors.length > 1 ? "s" : ""}`
+                  : "No calculable con la información disponible"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3 sm:col-span-2">
+            <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+              <AlertTriangle size={14} className="text-red-500" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">Fricciones detectadas</p>
+              <p className="text-sm text-slate-800">
+                {data.perdidas.length > 0
+                  ? `${data.perdidas.length} pérdida${data.perdidas.length > 1 ? "s" : ""} invisible${data.perdidas.length > 1 ? "s" : ""} identificada${data.perdidas.length > 1 ? "s" : ""}`
+                  : "No se detectaron fricciones en el último análisis"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Principales señales VIS — reutiliza Pérdidas / Oportunidades / brecha de reputación ya calculada */}
+      {(data.perdidas.length > 0 || data.oportunidades.length > 0) && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-2xl mb-6">
+          <p className="text-sm font-semibold text-slate-800 mb-4">
+            Principales señales VIS
+          </p>
+          <div className="space-y-3">
+            {data.perdidas.slice(0, 1).map((p, idx) => (
+              <div key={`p-${idx}`} className="flex items-start gap-2.5">
+                <span className="text-base leading-none">🔴</span>
+                <p className="text-sm text-slate-700">
+                  <span className="font-medium">Fricción:</span> {p.titulo}
+                </p>
+              </div>
+            ))}
+            {data.perdidas.slice(1, 2).map((p, idx) => (
+              <div key={`p2-${idx}`} className="flex items-start gap-2.5">
+                <span className="text-base leading-none">🟠</span>
+                <p className="text-sm text-slate-700">
+                  <span className="font-medium">Brecha:</span> {p.titulo}
+                </p>
+              </div>
+            ))}
+            {data.oportunidades.slice(0, 1).map((o, idx) => (
+              <div key={`o-${idx}`} className="flex items-start gap-2.5">
+                <span className="text-base leading-none">🟢</span>
+                <p className="text-sm text-slate-700">
+                  <span className="font-medium">Fortaleza:</span> {o.titulo}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {!planAtLeast(plan, "pro") ? (
         <UpgradeNotice feature="Ver la evolución de tu VIS Score en el tiempo" minPlan="pro" />

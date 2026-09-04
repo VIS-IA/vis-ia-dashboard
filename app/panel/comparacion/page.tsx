@@ -155,38 +155,34 @@ export default async function ComparacionPage() {
         )}
 
         {/* Experience */}
-        {experience && (
+        {experience && experience.signals.length > 0 && (
           <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <h3 className="text-sm font-semibold text-purple-600 mb-1">
+            <h3 className="text-sm font-semibold text-purple-600 mb-3">
               Experiencia del Cliente
             </h3>
-            {experience.type === "negocio" ? (
-              <ChangeRow
-                label="Puntaje de sentimiento (reseñas)"
-                current={experience.sentimentScore}
-                previous={experience.sentimentScorePrevious ?? experience.sentimentScore}
-                currentSuffix="/100"
-                previousSuffix="/100"
-              />
-            ) : (
-              <>
-                <ChangeRow
-                  label="Limpieza"
-                  current={experience.cleanliness.toFixed(1)}
-                  previous={(experience.cleanlinessPrevious ?? experience.cleanliness).toFixed(1)}
-                />
-                <ChangeRow
-                  label="Personal / Atención"
-                  current={experience.staff.toFixed(1)}
-                  previous={(experience.staffPrevious ?? experience.staff).toFixed(1)}
-                />
-                <ChangeRow
-                  label="Comodidad"
-                  current={experience.comfort.toFixed(1)}
-                  previous={(experience.comfortPrevious ?? experience.comfort).toFixed(1)}
-                />
-              </>
-            )}
+            <div className="space-y-2">
+              {experience.signals.map((s, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 text-sm"
+                >
+                  <span className="text-slate-600">
+                    {s.category} <span className="text-slate-400">— {s.source}</span>
+                  </span>
+                  <span className="font-semibold text-slate-900">
+                    {s.sourceType === "platform_score" && s.platformScore !== null
+                      ? `${s.platformScore.toFixed(1)}/${s.platformScoreScale ?? 10}`
+                      : s.positiveMentions !== null
+                      ? `${s.positiveMentions} positivas / ${s.negativeMentions ?? 0} negativas`
+                      : "—"}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-slate-400 mt-3">
+              Comparación detallada disponible próximamente — por ahora se
+              muestra el estado actual de cada señal.
+            </p>
           </div>
         )}
       </div>
