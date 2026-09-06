@@ -1,5 +1,6 @@
 import { getReportHistory } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
+import { getVisStatusPresentation } from "@/lib/visStatus";
 import { FileText } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,9 @@ export default async function ReportesPage() {
                 <p className="text-sm font-medium text-slate-800">
                   Análisis del {r.analysisDate}
                 </p>
-                <p className="text-xs text-slate-500">{r.visScoreStatus}</p>
+                <p className="text-xs text-slate-500">
+                  {getVisStatusPresentation(r.visScoreStatus).label}
+                </p>
               </div>
               {r.visScoreCurrent !== null ? (
                 <span className="text-lg font-bold text-slate-900">
