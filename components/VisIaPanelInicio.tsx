@@ -1,4 +1,4 @@
-"use client";
+use client";
 
 import React from "react";
 import Link from "next/link";
@@ -22,6 +22,7 @@ import ScoreGauge from "@/components/ScoreGauge";
 import NotificationsBell from "@/components/NotificationsBell";
 import EconomicImpactSummary from "@/components/EconomicImpactSummary";
 import { planAtLeast, type PlanTier } from "@/lib/plan";
+import { getVisStatusPresentation } from "@/lib/visStatus";
 import type { DashboardData } from "@/lib/types";
 
 /**
@@ -83,6 +84,7 @@ export default function VisIaPanelInicio({
   plan?: PlanTier;
 }) {
   const canCompare = planAtLeast(plan, "pro");
+  const statusPresentation = getVisStatusPresentation(d.visScore.status);
 
   function downloadReport() {
     const lines = [
@@ -223,8 +225,10 @@ export default function VisIaPanelInicio({
                   <>
                     <ScoreGauge score={d.visScore.current} />
                     <div>
-                      <span className="bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-full inline-block">
-                        {d.visScore.status}
+                      <span
+                        className={`${statusPresentation.badgeClass} text-white text-xs font-semibold px-3 py-1 rounded-full inline-block`}
+                      >
+                        {statusPresentation.label}
                       </span>
                       <p className="text-xs text-slate-500 mt-2">
                         {d.visScore.statusNote}
