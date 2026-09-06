@@ -6,18 +6,20 @@ import {
   getReputationDetail,
   getExperienceDetail,
   getCompetitors,
+  getOtherReputations,
 } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import ScoreGauge from "@/components/ScoreGauge";
 import ScoreTimelineChart from "@/components/ScoreTimelineChart";
 import UpgradeNotice from "@/components/UpgradeNotice";
 import { planAtLeast } from "@/lib/plan";
+import { getVisStatusPresentation } from "@/lib/visStatus";
 import { ArrowUp, Star, Users, Globe, BarChart3, AlertTriangle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function VisScorePage() {
-  const [data, onboarding, history, plan, reputation, experience, competitors] =
+  const [data, onboarding, history, plan, reputation, experience, competitors, otherReputations] =
     await Promise.all([
       getDashboardData(),
       getOnboardingStatus(),
@@ -26,6 +28,7 @@ export default async function VisScorePage() {
       getReputationDetail(),
       getExperienceDetail(),
       getCompetitors(),
+      getOtherReputations(),
     ]);
 
   if (!data) {
@@ -61,6 +64,18 @@ export default async function VisScorePage() {
     .reverse()
     .map((r) => ({ date: r.analysisDate, score: r.visScoreCurrent as number }));
 
+  const statusPresentation = getVisStatusPresentation(data.visScore.status);
+
+  // Presencia digital confirmada: Google (reputation_details) + cualquier
+  // otra plataforma verificada (other_reputations, ej. Booking.com).
+  // Esto NO mide tráfico ni interacciones — solo si hay perfil real y
+  // verificable en cada plataforma. Si algún día se agrega una fuente de
+  // tráfico real, este texto debe actualizarse para reflejarlo, no antes.
+  const platformsConfirmed = [
+    ...(reputation ? ["Google"] : []),
+    ...otherReputations.map((r) => r.platform),
+  ];
+
   return (
     <PanelLayout
       title="VIS Score"
@@ -69,8 +84,10 @@ export default async function VisScorePage() {
       <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-xl flex items-center gap-8 mb-6">
         <ScoreGauge score={data.visScore.current} size={190} />
         <div>
-          <span className="bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-full inline-block">
-            {data.visScore.status}
+          <span
+            className={`${statusPresentation.badgeClass} text-white text-xs font-semibold px-3 py-1 rounded-full inline-block`}
+          >
+            {statusPresentation.label}
           </span>
           <p className="text-sm text-slate-500 mt-2 mb-4">
             {data.visScore.statusNote}
@@ -131,7 +148,9 @@ export default async function VisScorePage() {
             <div>
               <p className="text-xs font-medium text-slate-500">Presencia Digital</p>
               <p className="text-sm text-slate-800">
-                No calculable con la información disponible
+                {platformsConfirmed.length > 0
+                  ? `Perfil confirmado en ${platformsConfirmed.length} plataforma${platformsConfirmed.length > 1 ? "s" : ""} (${platformsConfirmed.join(", ")})`
+                  : "No calculable con la información disponible"}
               </p>
             </div>
           </div>
