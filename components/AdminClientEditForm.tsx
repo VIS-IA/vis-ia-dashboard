@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { AdminClientRow } from "@/lib/adminQueries";
-import { updateClient } from "@/app/admin/clientes/[id]/actions";
+import { updateClient } from "@/app/admin/(protected)/clientes/[id]/actions";
 
 export default function AdminClientEditForm({ client }: { client: AdminClientRow }) {
   const [isPending, startTransition] = useTransition();
