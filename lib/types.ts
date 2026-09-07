@@ -126,22 +126,37 @@ export interface DashboardAction {
   fechaRevision: string | null;
 }
 
-export interface ReputationDetail {
-  avgRating: number;
-  avgRatingPrevious: number | null;
-  totalReviews: number;
-  totalReviewsPrevious: number | null;
-  positiveCount: number | null;
-  neutralCount: number | null;
-  negativeCount: number | null;
-  responseRatePercent: number | null;
-  responseRatePercentPrevious: number | null;
-  unrespondedNegative: number | null;
-  reviewsResponded: number | null;
-  reviewsUnresponded: number | null;
-  avgResponseTimeDays: number | null;
-  /** true cuando la tasa de respuesta cayó fuerte o llegó a 0 frente al reporte anterior */
-  responseManagementSignal: boolean;
+
+/**
+ * Un punto de una serie de tiempo (VIS Score, calificación promedio,
+ * cantidad de reseñas, etc.) construido a partir de reportes reales
+ * publicados — nunca interpolado ni inventado entre reportes.
+ */
+export interface TrendPoint {
+  reportId: string;
+  analysisDate: string;
+  analysisDateLabel: string;
+  value: number | null;
+}
+
+/**
+ * Lectura honesta de una serie de tiempo: solo afirma un patrón
+ * ("mejorando", "cayendo") cuando hay suficientes reportes reales para
+ * sostenerlo. Con menos evidencia, dice explícitamente que no hay
+ * suficiente historial en vez de forzar una conclusión.
+ */
+export interface TrendInsight {
+  status: "sin_datos" | "primer_reporte" | "insuficiente" | "ok";
+  /** Cuántos reportes con valor numérico se usaron para este cálculo. */
+  pointsUsed: number;
+  summary: string;
+  /** Cambio total entre el primer y el último punto usado, si aplica. */
+  totalChange: number | null;
+  /** true si los últimos 3 reportes consecutivos subieron cada vez. */
+  improvingStreak: boolean;
+  /** true si, tras una racha de mejora, el último reporte cayó frente al anterior. */
+  recentReversal: boolean;
+}
 }
 
 export type EvidenceSourceType = "reviews_text" | "platform_score";
