@@ -4,6 +4,7 @@ import type {
   DashboardData,
   DashboardMetric,
   ReputationDetail,
+  ExperienceDetail,
   Competitor,
   OtherReputation,
   OnboardingQuestion,
