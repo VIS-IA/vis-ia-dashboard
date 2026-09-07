@@ -16,13 +16,22 @@ function ChangeRow({
 }: {
   label: string;
   current: number | string;
-  previous: number | string;
+  // null = no hay reporte anterior con el que comparar. Nunca se sustituye
+  // por el valor actual: eso mostraría "Antes: X" como si X fuera un dato
+  // real del pasado cuando en realidad no existe ninguna medición previa.
+  previous: number | string | null;
   currentSuffix?: string;
   previousSuffix?: string;
 }) {
   const curNum = typeof current === "number" ? current : parseFloat(String(current));
-  const prevNum = typeof previous === "number" ? previous : parseFloat(String(previous));
-  const diff = !isNaN(curNum) && !isNaN(prevNum) ? curNum - prevNum : null;
+  const prevNum =
+    previous === null
+      ? null
+      : typeof previous === "number"
+      ? previous
+      : parseFloat(String(previous));
+  const diff =
+    prevNum !== null && !isNaN(curNum) && !isNaN(prevNum) ? curNum - prevNum : null;
   const up = diff !== null && diff > 0;
   const down = diff !== null && diff < 0;
 
@@ -31,8 +40,7 @@ function ChangeRow({
       <span className="text-sm text-slate-600">{label}</span>
       <div className="flex items-center gap-3">
         <span className="text-xs text-slate-400">
-          Antes: {previous}
-          {previousSuffix}
+          {previous === null ? "Primer reporte" : `Antes: ${previous}${previousSuffix}`}
         </span>
         <span className="text-sm font-semibold text-slate-900">
           {current}
@@ -98,7 +106,7 @@ export default async function ComparacionPage() {
             <ChangeRow
               label="Puntaje general"
               current={data.visScore.current}
-              previous={data.visScore.previous ?? data.visScore.current}
+              previous={data.visScore.previous}
               currentSuffix="/100"
               previousSuffix="/100"
             />
@@ -144,12 +152,16 @@ export default async function ComparacionPage() {
             <ChangeRow
               label="Calificación promedio"
               current={reputation.avgRating.toFixed(1)}
-              previous={(reputation.avgRatingPrevious ?? reputation.avgRating).toFixed(1)}
+              previous={
+                reputation.avgRatingPrevious !== null
+                  ? reputation.avgRatingPrevious.toFixed(1)
+                  : null
+              }
             />
             <ChangeRow
               label="Reseñas totales"
               current={reputation.totalReviews}
-              previous={reputation.totalReviewsPrevious ?? reputation.totalReviews}
+              previous={reputation.totalReviewsPrevious}
             />
           </div>
         )}
@@ -189,3 +201,4 @@ export default async function ComparacionPage() {
     </PanelLayout>
   );
 }
+
