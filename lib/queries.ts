@@ -4,13 +4,14 @@ import type {
   DashboardData,
   DashboardMetric,
   ReputationDetail,
-  ExperienceDetail,
   Competitor,
   OtherReputation,
   OnboardingQuestion,
   OnboardingAnswerValue,
   VisualEvidence,
   EvidenceRecord,
+  TrendPoint,
+  TrendInsight,
 } from "@/lib/types";
 
 /**
@@ -735,5 +736,226 @@ export async function getEvidenceRecords(): Promise<EvidenceRecord[]> {
     }));
   } catch {
     return [];
+  }
+}
+// ---------------------------------------------------------------------
+// Análisis de Tendencias (plan Intelligence)
+//
+// Todo lo de abajo se construye ÚNICAMENTE a partir de reportes reales
+// ya publicados — nunca se interpola ni se inventa un punto intermedio.
+// Si no hay suficientes reportes para sostener una afirmación de
+// patrón ("mejorando", "cayendo"), buildTrendInsight lo dice
+// explícitamente en vez de forzar una conclusión.
+// ---------------------------------------------------------------------
+
+function formatTrendDateLabel(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/**
+ * Lee cualquier serie de TrendPoint (ya en orden cronológico ascendente)
+ * y devuelve una lectura honesta: solo afirma una racha de mejora o una
+ * caída reciente cuando hay evidencia real de al menos 4 reportes.
+ */
+export function buildTrendInsight(points: TrendPoint[]): TrendInsight {
+  const withValue = points.filter(
+    (p): p is TrendPoint & { value: number } => p.value !== null
+  );
+
+  if (withValue.length === 0) {
+    return {
+      status: "sin_datos",
+      pointsUsed: 0,
+      summary: "Aún no hay reportes con este dato para mostrar una tendencia.",
+      totalChange: null,
+      improvingStreak: false,
+      recentReversal: false,
+    };
+  }
+
+  if (withValue.length === 1) {
+    return {
+      status: "primer_reporte",
+      pointsUsed: 1,
+      summary:
+        "Esta es tu primera medición registrada — la tendencia aparecerá a partir del segundo reporte.",
+      totalChange: null,
+      improvingStreak: false,
+      recentReversal: false,
+    };
+  }
+
+  const totalChange =
+    Math.round(
+      (withValue[withValue.length - 1].value - withValue[0].value) * 10
+    ) / 10;
+  const changeLabel = `${totalChange > 0 ? "+" : ""}${totalChange}`;
+
+  const deltas: number[] = [];
+  for (let i = 1; i < withValue.length; i++) {
+    deltas.push(
+      Math.round((withValue[i].value - withValue[i - 1].value) * 10) / 10
+    );
+  }
+
+  if (withValue.length < 4) {
+    return {
+      status: "insuficiente",
+      pointsUsed: withValue.length,
+      summary: `Cambio de ${changeLabel} desde tu primer reporte registrado. Se necesitan al menos 4 reportes para detectar un patrón confiable — por ahora esto es solo el cambio total, no una tendencia confirmada.`,
+      totalChange,
+      improvingStreak: false,
+      recentReversal: false,
+    };
+  }
+
+  // ¿Los últimos reportes vienen mejorando de forma consecutiva?
+  let improvingStreak = 0;
+  for (let i = deltas.length - 1; i >= 0 && deltas[i] > 0; i--) {
+    improvingStreak++;
+  }
+
+  // ¿Hubo una racha de mejora que se revirtió justo en el último reporte?
+  let recentReversal = false;
+  let reversalStreak = 0;
+  if (deltas[deltas.length - 1] < 0) {
+    for (let i = deltas.length - 2; i >= 0 && deltas[i] > 0; i--) {
+      reversalStreak++;
+    }
+    recentReversal = reversalStreak >= 2;
+  }
+
+  let summary: string;
+  if (recentReversal) {
+    summary = `Mejoró durante ${reversalStreak + 1} reportes consecutivos, pero cayó ${Math.abs(
+      deltas[deltas.length - 1]
+    )} en el reporte más reciente.`;
+  } else if (improvingStreak >= 3) {
+    summary = `Mejorando durante ${improvingStreak} reportes consecutivos (cambio total de ${changeLabel} desde el primer reporte registrado).`;
+  } else {
+    summary = `Cambio de ${changeLabel} desde tu primer reporte registrado (${withValue.length} reportes analizados).`;
+  }
+
+  return {
+    status: "ok",
+    pointsUsed: withValue.length,
+    summary,
+    totalChange,
+    improvingStreak: improvingStreak >= 3,
+    recentReversal,
+  };
+}
+
+/**
+ * Evolución del VIS Score a través de todos los reportes publicados,
+ * en orden cronológico ascendente (para graficar de izquierda a
+ * derecha). A diferencia de getReportHistory (que es descendente y se
+ * usa para el listado de "Reportes"), esta función es para gráficas.
+ */
+export async function getVisScoreTrend(): Promise<TrendPoint[]> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data: client } = await supabase
+      .from("clients")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+    if (!client) return [];
+
+    const { data: reports } = await supabase
+      .from("reports")
+      .select("id, analysis_date, vis_score_current")
+      .eq("client_id", client.id)
+      .order("analysis_date", { ascending: true });
+
+    return (reports ?? []).map((r) => ({
+      reportId: r.id,
+      analysisDate: r.analysis_date,
+      analysisDateLabel: formatTrendDateLabel(r.analysis_date),
+      value: r.vis_score_current,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Evolución de la reputación (calificación promedio y cantidad de
+ * reseñas) a través de todos los reportes publicados — no solo el
+ * último vs. el anterior, como en la página de Reputación. Exclusivo
+ * del plan Intelligence.
+ */
+export async function getReputationTrend(): Promise<{
+  avgRating: TrendPoint[];
+  totalReviews: TrendPoint[];
+}> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { avgRating: [], totalReviews: [] };
+
+    const { data: client } = await supabase
+      .from("clients")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+    if (!client) return { avgRating: [], totalReviews: [] };
+
+    const { data: reports } = await supabase
+      .from("reports")
+      .select("id, analysis_date")
+      .eq("client_id", client.id)
+      .order("analysis_date", { ascending: true });
+
+    if (!reports || reports.length === 0) {
+      return { avgRating: [], totalReviews: [] };
+    }
+
+    const { data: details } = await supabase
+      .from("reputation_details")
+      .select("report_id, avg_rating, total_reviews")
+      .in(
+        "report_id",
+        reports.map((r) => r.id)
+      );
+
+    const byReportId = new Map(
+      (details ?? []).map((d) => [d.report_id, d])
+    );
+
+    const avgRating: TrendPoint[] = [];
+    const totalReviews: TrendPoint[] = [];
+
+    for (const r of reports) {
+      const detail = byReportId.get(r.id);
+      const label = formatTrendDateLabel(r.analysis_date);
+      avgRating.push({
+        reportId: r.id,
+        analysisDate: r.analysis_date,
+        analysisDateLabel: label,
+        value: detail?.avg_rating ?? null,
+      });
+      totalReviews.push({
+        reportId: r.id,
+        analysisDate: r.analysis_date,
+        analysisDateLabel: label,
+        value: detail?.total_reviews ?? null,
+      });
+    }
+
+    return { avgRating, totalReviews };
+  } catch {
+    return { avgRating: [], totalReviews: [] };
   }
 }
