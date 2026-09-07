@@ -56,6 +56,17 @@ export async function updateSession(request: NextRequest) {
   const isProtectedRoute = request.nextUrl.pathname.startsWith("/panel");
   const isLoginRoute = request.nextUrl.pathname.startsWith("/login");
 
+  // El panel de administrador vive en un espacio de rutas separado, con
+  // su propio login — solo verifica sesión aquí (rechaza anónimos); la
+  // verificación de que el usuario es realmente admin (no solo cualquier
+  // cliente logueado) ocurre en app/admin/layout.tsx contra Supabase,
+  // porque eso requiere una consulta (is_admin()) que no vale la pena
+  // duplicar/repetir en cada request de middleware.
+  const isAdminRoute =
+    request.nextUrl.pathname.startsWith("/admin") &&
+    !request.nextUrl.pathname.startsWith("/admin/login");
+  const isAdminLoginRoute = request.nextUrl.pathname.startsWith("/admin/login");
+
   let user = null;
   try {
     const result = await supabase.auth.getUser();
@@ -74,8 +85,18 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  if (!user && isAdminRoute) {
+    const redirectUrl = new URL("/admin/login", request.url);
+    return NextResponse.redirect(redirectUrl);
+  }
+
   if (user && isLoginRoute) {
     const redirectUrl = new URL("/panel", request.url);
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  if (user && isAdminLoginRoute) {
+    const redirectUrl = new URL("/admin", request.url);
     return NextResponse.redirect(redirectUrl);
   }
 
