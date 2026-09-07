@@ -101,7 +101,7 @@ export function PanelSidebar() {
       </div>
 
       <div className="p-4 space-y-3">
-        <div className="bg-white/5 rounded-xl p-4">
+                <div className="bg-white/5 rounded-xl p-4">
           <p className="text-sm font-medium text-slate-200">¿Necesitas ayuda?</p>
           <p className="text-xs text-slate-500 mt-1">Escríbenos por WhatsApp</p>
         </div>
