@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 
-export default function AdminLoginPage() {
+// useSearchParams() obliga a Next a envolver el componente que lo usa en
+// un límite de Suspense — si no, falla al intentar pre-renderizar esta
+// página en build ("missing-suspense-with-csr-bailout"). Por eso el
+// formulario real vive en un componente aparte (AdminLoginForm) y este
+// archivo solo lo envuelve.
+function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -120,5 +125,13 @@ export default function AdminLoginPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminLoginForm />
+    </Suspense>
   );
 }
