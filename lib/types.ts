@@ -126,6 +126,23 @@ export interface DashboardAction {
   fechaRevision: string | null;
 }
 
+export interface ReputationDetail {
+  avgRating: number;
+  avgRatingPrevious: number | null;
+  totalReviews: number;
+  totalReviewsPrevious: number | null;
+  positiveCount: number | null;
+  neutralCount: number | null;
+  negativeCount: number | null;
+  responseRatePercent: number | null;
+  responseRatePercentPrevious: number | null;
+  unrespondedNegative: number | null;
+  reviewsResponded: number | null;
+  reviewsUnresponded: number | null;
+  avgResponseTimeDays: number | null;
+  /** true cuando la tasa de respuesta cayó fuerte o llegó a 0 frente al reporte anterior */
+  responseManagementSignal: boolean;
+}
 
 /**
  * Un punto de una serie de tiempo (VIS Score, calificación promedio,
@@ -237,7 +254,6 @@ export interface OnboardingAnswer {
   questionKey: string;
   answer: OnboardingAnswerValue;
 }
-
 
 export interface DashboardData {
   business: {
