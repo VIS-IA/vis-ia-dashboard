@@ -157,7 +157,6 @@ export interface TrendInsight {
   /** true si, tras una racha de mejora, el último reporte cayó frente al anterior. */
   recentReversal: boolean;
 }
-}
 
 export type EvidenceSourceType = "reviews_text" | "platform_score";
 
