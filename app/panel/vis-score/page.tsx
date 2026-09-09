@@ -7,6 +7,7 @@ import {
   getExperienceDetail,
   getCompetitors,
   getOtherReputations,
+  type ReportSummary,
 } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import ScoreGauge from "@/components/ScoreGauge";
@@ -59,10 +60,10 @@ export default async function VisScorePage() {
   }
 
   const scoredHistory = history
-    .filter((r) => r.visScoreCurrent !== null)
+    .filter((r: ReportSummary) => r.visScoreCurrent !== null)
     .slice()
     .reverse()
-    .map((r) => ({ date: r.analysisDate, score: r.visScoreCurrent as number }));
+    .map((r: ReportSummary) => ({ date: r.analysisDate, score: r.visScoreCurrent as number }));
 
   const statusPresentation = getVisStatusPresentation(data.visScore.status);
 
