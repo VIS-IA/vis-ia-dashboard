@@ -1,4 +1,5 @@
 import { getDashboardData, getReputationDetail, getExperienceDetail, getClientPlan } from "@/lib/queries";
+import type { DashboardMetric, ExperienceSignal } from "@/lib/types";
 import PanelLayout from "@/components/PanelLayout";
 import UpgradeNotice from "@/components/UpgradeNotice";
 import { planAtLeast } from "@/lib/plan";
@@ -118,7 +119,7 @@ export default async function ComparacionPage() {
           <h3 className="text-sm font-semibold text-slate-800 mb-1">
             Métricas de actividad
           </h3>
-          {data.metrics.map((m, idx) => {
+          {data.metrics.map((m: DashboardMetric, idx: number) => {
             const Icon = ICON_MAP[m.icon_key] ?? TrendingUp;
             return (
               <div
@@ -173,7 +174,7 @@ export default async function ComparacionPage() {
               Experiencia del Cliente
             </h3>
             <div className="space-y-2">
-              {experience.signals.map((s, idx) => (
+              {experience.signals.map((s: ExperienceSignal, idx: number) => (
                 <div
                   key={idx}
                   className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 text-sm"
@@ -201,4 +202,3 @@ export default async function ComparacionPage() {
     </PanelLayout>
   );
 }
-
