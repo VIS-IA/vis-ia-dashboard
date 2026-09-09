@@ -7,7 +7,7 @@ import type { PlanTier } from "@/lib/plan";
  * porque STRIPE_SECRET_KEY solo debe existir en el entorno del servidor.
  */
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2024-06-20",
+    apiVersion: "2025-02-24.acacia",
 });
 
 /**
