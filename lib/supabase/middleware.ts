@@ -95,10 +95,17 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && isAdminLoginRoute) {
-    const redirectUrl = new URL("/admin", request.url);
-    return NextResponse.redirect(redirectUrl);
-  }
+  // Nota: a diferencia de /login (cliente normal), aquí NO redirigimos a
+  // un usuario con sesión activa fuera de /admin/login. El middleware solo
+  // sabe que hay sesión, no si es admin — esa verificación real vive en
+  // requireAdmin() (app/admin/(protected)/layout.tsx vía lib/adminQueries.ts),
+  // que ya manda de vuelta a /admin/login?error=no_autorizado cuando la
+  // cuenta no es admin. Si el middleware también redirigiera hacia /admin
+  // aquí, esas dos redirecciones se pisan entre sí y el navegador entra en
+  // un loop infinito (ERR_TOO_MANY_REDIRECTS) para cualquier cuenta logueada
+  // que no sea admin. El propio formulario de login (AdminLoginForm) ya se
+  // encarga de mandar a /admin cuando el login SÍ es exitoso y es admin.
 
-  return response;
+  return response;  
+
 }
