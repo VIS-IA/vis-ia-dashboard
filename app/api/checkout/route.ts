@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe, PLAN_TO_PRICE } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import { planAtLeast, type PlanTier } from "@/lib/plan";
-
+import type Stripe from "stripe";
 /**
  * Crea una Checkout Session de Stripe para que el cliente actual suba de
  * plan. Solo permite subir (nunca bajar ni "renovar" el mismo plan) —
@@ -52,7 +52,13 @@ export async function POST(request: NextRequest) {
     const origin =
       request.headers.get("origin") ?? process.env.NEXT_PUBLIC_BASE_URL ?? "";
 
-    const session = await stripe.checkout.sessions.create({
+        const sessionParams: Stripe.Checkout.SessionCreateParams & {
+      // El SDK de stripe instalado (v17) es anterior a "managed_payments"
+      // en la API de Stripe, así que su tipo aún no lo declara — se
+      // extiende aquí en vez de subir la versión mayor del paquete stripe
+      // (que arrastraría otros cambios de API sin probar).
+      managed_payments?: { enabled: boolean };
+    } = {
       mode: isOneTime ? "payment" : "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       client_reference_id: client.id,
@@ -62,7 +68,18 @@ export async function POST(request: NextRequest) {
       },
       success_url: `${origin}/panel/mi-cuenta?checkout=success`,
       cancel_url: `${origin}/panel/mi-cuenta?checkout=cancelled`,
-    });
+      // Managed Payments viene activado por defecto en cuentas nuevas de
+      // Stripe y exige que cada producto tenga un tax_code específico
+      // elegible para ese programa (ver Stripe docs: managed-payments
+      // eligibility). Los productos VIS IA (Diagnostic/Pro/Intelligence)
+      // no lo tienen configurado y no lo necesitamos — VIS IA no usa el
+      // cálculo de impuestos administrado por Stripe. Se desactiva
+      // explícitamente para esta sesión en vez de tocar el tax_code de
+      // cada producto en el Dashboard.
+      managed_payments: { enabled: false },
+    };
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return NextResponse.json({ url: session.url });
   } catch (err) {
