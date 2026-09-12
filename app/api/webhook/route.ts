@@ -26,8 +26,21 @@ function planFromSubscription(subscription: Stripe.Subscription): PlanTier | und
  * suscripción coincide con lo que estaba pendiente: así es como sabemos
  * que una bajada de plan programada (via Subscription Schedule) ya entró
  * en vigor al terminar el período pagado.
+ *
+ * `clientId` se pasa SOLO la primera vez (desde checkout.session.completed,
+ * que es el único evento que trae el client_reference_id/metadata.clientId
+ * que identifica al cliente en Supabase). En ese momento ni
+ * stripe_subscription_id ni stripe_customer_id existen todavía en la fila
+ * del cliente, así que buscar por esos campos no encontraría nada — por
+ * eso hay que ubicar la fila por su id directamente esa primera vez. En
+ * eventos posteriores (customer.subscription.updated/created) ya no hay
+ * clientId disponible, pero para entonces la fila ya tiene guardados
+ * stripe_subscription_id/stripe_customer_id y esa búsqueda sí funciona.
  */
-async function syncSubscriptionToSupabase(subscription: Stripe.Subscription) {
+async function syncSubscriptionToSupabase(
+  subscription: Stripe.Subscription,
+  clientId?: string
+) {
   const plan = planFromSubscription(subscription);
   if (!plan) {
     console.error(
@@ -39,24 +52,36 @@ async function syncSubscriptionToSupabase(subscription: Stripe.Subscription) {
 
   const supabaseAdmin = createAdminClient();
 
-  // Busca primero por stripe_subscription_id (caso normal); si todavía no
-  // se había guardado (carrera con el primer checkout.session.completed),
-  // busca por stripe_customer_id como respaldo.
-  const { data: existing } = await supabaseAdmin
-    .from("clients")
-    .select("id, pending_plan")
-    .eq("stripe_subscription_id", subscription.id)
-    .maybeSingle();
+  let clientRow: { id: string; pending_plan: PlanTier | null } | null = null;
 
-  const clientRow =
-    existing ??
-    (
-      await supabaseAdmin
-        .from("clients")
-        .select("id, pending_plan")
-        .eq("stripe_customer_id", subscription.customer as string)
-        .maybeSingle()
-    ).data;
+  if (clientId) {
+    const { data } = await supabaseAdmin
+      .from("clients")
+      .select("id, pending_plan")
+      .eq("id", clientId)
+      .maybeSingle();
+    clientRow = data;
+  }
+
+  if (!clientRow) {
+    // Busca primero por stripe_subscription_id (caso normal); si todavía
+    // no se había guardado, busca por stripe_customer_id como respaldo.
+    const { data: existing } = await supabaseAdmin
+      .from("clients")
+      .select("id, pending_plan")
+      .eq("stripe_subscription_id", subscription.id)
+      .maybeSingle();
+
+    clientRow =
+      existing ??
+      (
+        await supabaseAdmin
+          .from("clients")
+          .select("id, pending_plan")
+          .eq("stripe_customer_id", subscription.customer as string)
+          .maybeSingle()
+      ).data;
+  }
 
   if (!clientRow) {
     console.error(
@@ -130,7 +155,7 @@ export async function POST(request: NextRequest) {
           const subscription = await stripe.subscriptions.retrieve(
             session.subscription as string
           );
-          await syncSubscriptionToSupabase(subscription);
+          await syncSubscriptionToSupabase(subscription, clientId);
           break;
         }
 
