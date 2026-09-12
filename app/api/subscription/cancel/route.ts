@@ -49,6 +49,22 @@ export async function POST(request: NextRequest) {
 
     const cancelAtPeriodEnd = action === "cancel";
 
+    // Si había una bajada de plan programada (Subscription Schedule desde
+    // /api/subscription/change), Stripe no deja modificar cancel_at_period_end
+    // directamente mientras el schedule esté activo — hay que soltarlo
+    // primero. Además, cancelar reemplaza a esa bajada programada: si el
+    // plan va a terminar por completo, ya no tiene sentido bajarlo antes.
+    const subscription = await stripe.subscriptions.retrieve(
+      client.stripe_subscription_id
+    );
+    const scheduleId = subscription.schedule as string | null;
+    let clearedPendingPlan = false;
+
+    if (cancelAtPeriodEnd && scheduleId) {
+      await stripe.subscriptionSchedules.release(scheduleId);
+      clearedPendingPlan = true;
+    }
+
     await stripe.subscriptions.update(client.stripe_subscription_id, {
       cancel_at_period_end: cancelAtPeriodEnd,
     });
@@ -59,7 +75,10 @@ export async function POST(request: NextRequest) {
     const supabaseAdmin = createAdminClient();
     const { error } = await supabaseAdmin
       .from("clients")
-      .update({ cancel_at_period_end: cancelAtPeriodEnd })
+      .update({
+        cancel_at_period_end: cancelAtPeriodEnd,
+        ...(clearedPendingPlan ? { pending_plan: null } : {}),
+      })
       .eq("id", client.id);
 
     if (error) {
