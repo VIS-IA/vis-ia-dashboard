@@ -122,7 +122,6 @@ async function loadDashboardData(): Promise<DashboardData | null> {
           year: "numeric",
         })
       : "";
-
   // El "próximo análisis" siempre es exactamente un mes después de la
   // fecha real del análisis — no depende de un campo que haya que
   // llenar a mano en la matriz, así nunca queda desactualizado.
@@ -138,6 +137,7 @@ async function loadDashboardData(): Promise<DashboardData | null> {
     }
     return next;
   })();
+  
 
   const data: DashboardData = {
     business: {
