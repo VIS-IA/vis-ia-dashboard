@@ -105,7 +105,7 @@ export function PanelSidebar() {
           <p className="text-sm font-medium text-slate-200">¿Necesitas ayuda?</p>
           <p className="text-xs text-slate-500 mt-1">Escríbenos por WhatsApp</p>
         </div>
-        
+        <a
           href={WHATSAPP_LINK}
           target="_blank"
           rel="noopener noreferrer"
