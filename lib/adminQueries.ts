@@ -73,7 +73,7 @@ export async function listClientsOverview(): Promise<AdminClientRow[]> {
     .select("client_id, analysis_date, vis_score_current, vis_score_status")
     .order("analysis_date", { ascending: false });
 
-  const latestByClient = new Map
+  const latestByClient = new Map<
     string,
     { analysisDate: string; visScoreCurrent: number | null; visScoreStatus: string | null }
   >();
