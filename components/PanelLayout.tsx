@@ -101,11 +101,11 @@ export function PanelSidebar() {
       </div>
 
       <div className="p-4 space-y-3">
-                <div className="bg-white/5 rounded-xl p-4">
+        <div className="bg-white/5 rounded-xl p-4">
           <p className="text-sm font-medium text-slate-200">¿Necesitas ayuda?</p>
           <p className="text-xs text-slate-500 mt-1">Escríbenos por WhatsApp</p>
         </div>
-        <a
+        
           href={WHATSAPP_LINK}
           target="_blank"
           rel="noopener noreferrer"
@@ -147,7 +147,7 @@ export function PanelSidebar() {
       <aside
         className={`
           w-72 lg:w-64 shrink-0 bg-[#0b1220] text-slate-300 flex flex-col justify-between
-          fixed lg:static inset-y-0 left-0 z-50
+          fixed lg:static inset-y-0 left-0 z-50 overflow-y-auto overscroll-contain
           transform transition-transform duration-200 ease-in-out
           ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0
         `}
