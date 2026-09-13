@@ -31,7 +31,7 @@ export default function TerminosPage() {
             </p>
           </section>
 
-          <section>
+                    <section>
             <h2 className="font-semibold text-slate-900 mb-2">2. Planes y pagos</h2>
             <p>
               VIS IA ofrece distintos niveles de servicio (Diagnostic, PRO,
@@ -40,6 +40,17 @@ export default function TerminosPage() {
               contratación. Los planes recurrentes se renuevan
               automáticamente salvo cancelación por parte del cliente.
               Diagnostic es un servicio de pago único, no recurrente.
+            </p>
+            <p className="mt-3">
+              Todos los pagos son procesados por Stripe, un proveedor de
+              pagos externo — VIS IA no recibe ni almacena directamente el
+              número de la tarjeta del cliente. Al subir de plan, el cambio
+              se aplica de inmediato y se cobra la diferencia prorrateada
+              del período restante. Al bajar de plan, el cambio no es
+              inmediato: el cliente conserva su plan actual hasta el final
+              del período ya pagado, y el nuevo plan (más económico) entra
+              en vigor automáticamente al iniciar el siguiente ciclo de
+              facturación.
             </p>
           </section>
 
@@ -87,13 +98,19 @@ export default function TerminosPage() {
             </p>
           </section>
 
-          <section>
+                    <section>
             <h2 className="font-semibold text-slate-900 mb-2">6. Cancelación</h2>
             <p>
-              El cliente puede solicitar la cancelación de un plan
-              recurrente en cualquier momento, contactando a VIS IA. La
-              cancelación aplica al siguiente ciclo de facturación, salvo
-              que se acuerde lo contrario.
+              El cliente puede cancelar un plan recurrente en cualquier
+              momento desde su panel de "Mi Cuenta". La cancelación nunca
+              es inmediata: el cliente conserva su plan actual hasta el
+              final del período ya pagado — nunca pierde el tiempo que ya
+              pagó por adelantado. Al terminar ese período, la cuenta
+              regresa automáticamente a Diagnostic (la compra única del
+              cliente, que conserva de forma permanente), nunca queda sin
+              acceso al servicio. Mientras la cancelación esté programada y
+              no haya terminado el período, el cliente puede deshacerla en
+              cualquier momento desde el mismo panel.
             </p>
           </section>
 
