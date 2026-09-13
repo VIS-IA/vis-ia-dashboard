@@ -49,7 +49,7 @@ export default function PrivacidadPage() {
             </p>
           </section>
 
-                    <section>
+          <section>
             <h2 className="font-semibold text-slate-900 mb-2">
               3. Dónde se almacena la información
             </h2>
