@@ -17,6 +17,10 @@ export async function updateClient(clientId: string, formData: FormData) {
   const businessName = String(formData.get("businessName") ?? "").trim();
   const contactName = String(formData.get("contactName") ?? "").trim();
   const location = String(formData.get("location") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+  const address = String(formData.get("address") ?? "").trim();
+  const contactEmail = String(formData.get("contactEmail") ?? "").trim();
+  const internalNotes = String(formData.get("internalNotes") ?? "").trim();
 
   if (!["diagnostic", "pro", "intelligence"].includes(plan)) {
     return { error: "Plan inválido." };
@@ -36,6 +40,10 @@ export async function updateClient(clientId: string, formData: FormData) {
       business_name: businessName,
       contact_name: contactName || null,
       location,
+      phone: phone || null,
+      address: address || null,
+      contact_email: contactEmail || null,
+      internal_notes: internalNotes || null,
     })
     .eq("id", clientId);
 
