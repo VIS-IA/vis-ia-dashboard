@@ -109,12 +109,7 @@ export function PanelSidebar() {
           <p className="text-sm font-medium text-slate-200">¿Necesitas ayuda?</p>
           <p className="text-xs text-slate-500 mt-1">Escríbenos por WhatsApp</p>
         </div>
-        
-          href={WHATSAPP_LINK}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full flex items-center justify-center gap-2 text-sm text-slate-300 border border-white/10 rounded-lg py-2.5 hover:bg-white/5"
-        >
+        <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 text-sm text-slate-300 border border-white/10 rounded-lg py-2.5 hover:bg-white/5">
           Soporte VIS IA
         </a>
       </div>
