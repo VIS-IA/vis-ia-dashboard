@@ -31,7 +31,7 @@ export default function TerminosPage() {
             </p>
           </section>
 
-                    <section>
+          <section>
             <h2 className="font-semibold text-slate-900 mb-2">2. Planes y pagos</h2>
             <p>
               VIS IA ofrece distintos niveles de servicio (Diagnostic, PRO,
@@ -98,7 +98,7 @@ export default function TerminosPage() {
             </p>
           </section>
 
-                    <section>
+          <section>
             <h2 className="font-semibold text-slate-900 mb-2">6. Cancelación</h2>
             <p>
               El cliente puede cancelar un plan recurrente en cualquier
