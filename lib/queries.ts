@@ -15,6 +15,25 @@ import type {
   TrendInsight,
 } from "@/lib/types";
 
+function dayInMonth(year: number, month: number, day: number): Date {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  return new Date(year, month, Math.min(day, daysInMonth));
+}
+
+function nextAnalysisFromAnchor(anchorISO: string, today: Date = new Date()): Date {
+  const anchor = new Date(anchorISO);
+  const anchorDay = anchor.getDate();
+
+  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  let candidate = dayInMonth(today.getFullYear(), today.getMonth(), anchorDay);
+
+  if (candidate < todayDateOnly) {
+    candidate = dayInMonth(today.getFullYear(), today.getMonth() + 1, anchorDay);
+  }
+
+  return candidate;
+}
+
 /**
  * Loads the signed-in user's business + their most recent report,
  * and shapes it into the exact structure VisIaPanelInicio expects.
@@ -122,21 +141,7 @@ async function loadDashboardData(): Promise<DashboardData | null> {
           year: "numeric",
         })
       : "";
-  // El "próximo análisis" siempre es exactamente un mes después de la
-  // fecha real del análisis — no depende de un campo que haya que
-  // llenar a mano en la matriz, así nunca queda desactualizado.
-  const nextAnalysisDate = (() => {
-    const base = new Date(report.analysis_date);
-    const next = new Date(base);
-    next.setMonth(next.getMonth() + 1);
-    // Si el mes siguiente es más corto (ej. 31 de enero -> 31 de
-    // febrero no existe), JS lo empuja a marzo. Esto lo corrige para
-    // que caiga en el último día del mes siguiente en vez de saltar.
-    if (next.getDate() !== base.getDate()) {
-      next.setDate(0);
-    }
-    return next;
-  })();
+  const nextAnalysisDate = nextAnalysisFromAnchor(client.created_at);
   
 
   const data: DashboardData = {
