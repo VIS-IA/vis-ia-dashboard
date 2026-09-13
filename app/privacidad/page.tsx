@@ -49,7 +49,7 @@ export default function PrivacidadPage() {
             </p>
           </section>
 
-          <section>
+                    <section>
             <h2 className="font-semibold text-slate-900 mb-2">
               3. Dónde se almacena la información
             </h2>
@@ -61,6 +61,14 @@ export default function PrivacidadPage() {
               cuenta solo puede ver su propia información, nunca la de
               otro cliente.
             </p>
+            <p className="mt-3">
+              Los datos de facturación (método de pago, historial de
+              cargos, estado de la suscripción) son procesados y
+              almacenados por Stripe, nuestro proveedor de pagos. VIS IA
+              nunca recibe ni almacena directamente el número completo de
+              la tarjeta del cliente — esa información la maneja Stripe
+              bajo sus propios estándares de seguridad (PCI-DSS).
+            </p>
           </section>
 
           <section>
@@ -68,8 +76,9 @@ export default function PrivacidadPage() {
             <p>
               No compartimos la información del negocio con terceros, salvo
               cuando sea necesario para operar el servicio (por ejemplo,
-              proveedores de infraestructura como Supabase y Vercel) o
-              cuando la ley lo requiera.
+              proveedores de infraestructura como Supabase y Vercel, y
+              nuestro proveedor de pagos Stripe) o cuando la ley lo
+              requiera.
             </p>
           </section>
 
