@@ -18,6 +18,8 @@ import {
   Menu,
   X,
   TrendingUp,
+  MessageCircle,
+  GitCompare,
 } from "lucide-react";
 
 // Número de WhatsApp del negocio, en formato internacional sin signos:
@@ -29,8 +31,10 @@ const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponen
 
 export const NAV_ITEMS = [
   { icon: Home, label: "Inicio", href: "/panel" },
+  { icon: MessageCircle, label: "Asistente IA", href: "/panel/asistente" },
   { icon: ClipboardList, label: "15 Preguntas", href: "/panel/preguntas" },
   { icon: BarChart3, label: "VIS Score", href: "/panel/vis-score" },
+  { icon: GitCompare, label: "Comparación Completa", href: "/panel/comparacion" },
   { icon: TrendingUp, label: "Análisis de Tendencias", href: "/panel/tendencias" },
   { icon: Star, label: "Pérdida Invisible", href: "/panel/perdidas" },
   { icon: Sparkles, label: "Valor Oculto", href: "/panel/oportunidades" },
@@ -101,11 +105,11 @@ export function PanelSidebar() {
       </div>
 
       <div className="p-4 space-y-3">
-        <div className="bg-white/5 rounded-xl p-4">
+                <div className="bg-white/5 rounded-xl p-4">
           <p className="text-sm font-medium text-slate-200">¿Necesitas ayuda?</p>
           <p className="text-xs text-slate-500 mt-1">Escríbenos por WhatsApp</p>
         </div>
-        <a
+        
           href={WHATSAPP_LINK}
           target="_blank"
           rel="noopener noreferrer"
