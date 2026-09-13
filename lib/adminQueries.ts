@@ -12,6 +12,10 @@ export interface AdminClientRow {
   fechaInicio: string;
   onboardingCompleted: boolean;
   contactName: string | null;
+  phone: string | null;
+  address: string | null;
+  contactEmail: string | null;
+  internalNotes: string | null;
   // Del último reporte publicado, si existe. Todo null significa que
   // VIS IA todavía no ha publicado ningún reporte para este cliente —
   // nunca se rellena con un valor inventado.
@@ -58,7 +62,7 @@ export async function listClientsOverview(): Promise<AdminClientRow[]> {
   const { data: clients, error } = await supabase
     .from("clients")
     .select(
-      "id, client_code, business_name, location, business_type, plan, estado, fecha_inicio, onboarding_completed, contact_name"
+      "id, client_code, business_name, location, business_type, plan, estado, fecha_inicio, onboarding_completed, contact_name, phone, address, contact_email, internal_notes"
     )
     .order("business_name");
 
@@ -69,7 +73,7 @@ export async function listClientsOverview(): Promise<AdminClientRow[]> {
     .select("client_id, analysis_date, vis_score_current, vis_score_status")
     .order("analysis_date", { ascending: false });
 
-  const latestByClient = new Map<
+  const latestByClient = new Map
     string,
     { analysisDate: string; visScoreCurrent: number | null; visScoreStatus: string | null }
   >();
@@ -94,6 +98,10 @@ export async function listClientsOverview(): Promise<AdminClientRow[]> {
     fechaInicio: c.fecha_inicio,
     onboardingCompleted: c.onboarding_completed,
     contactName: c.contact_name,
+    phone: c.phone,
+    address: c.address,
+    contactEmail: c.contact_email,
+    internalNotes: c.internal_notes,
     latestReport: latestByClient.get(c.id) ?? null,
   }));
 }
