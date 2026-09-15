@@ -48,18 +48,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-        if (!process.env.ANTHROPIC_API_KEY) {
+             if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
         {
           error: "El asistente no está disponible en este momento.",
           debug: {
             keyPresent: Boolean(process.env.ANTHROPIC_API_KEY),
             keyLength: (process.env.ANTHROPIC_API_KEY || "").length,
+            matchingEnvNames: Object.keys(process.env).filter((k) =>
+              k.toUpperCase().includes("ANTHROPIC")
+            ),
+            totalEnvVarCount: Object.keys(process.env).length,
           },
         },
         { status: 503 }
       );
-    }
+    }   
 
     const history = await getAssistantHistory(context.clientId, 20);
 
