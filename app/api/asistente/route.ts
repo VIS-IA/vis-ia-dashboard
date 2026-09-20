@@ -5,9 +5,10 @@ import {
   saveAssistantMessage,
   countMessagesThisMonth,
   addClientFact,
+  ensureVisTrialStarted,
   ASSISTANT_MONTHLY_LIMIT,
 } from "@/lib/assistant";
-import { planAtLeast } from "@/lib/plan";
+import { planAtLeast, hasVisAssistantAccess } from "@/lib/plan";
 
 // Nombre de marca del asistente — úsalo en el prompt, nunca lo dejes
 // que se autodescriba con otro nombre.
@@ -65,6 +66,20 @@ export async function POST(request: NextRequest) {
     const context = await getAssistantContext();
     if (!context) {
       return NextResponse.json({ error: "No autenticado." }, { status: 401 });
+    }
+
+    // VIS es un beneficio del plan Intelligence. Diagnostic y Pro lo
+    // reciben gratis solo su primer mes (contado desde su primer uso,
+    // una sola vez por negocio, nunca se reinicia al re-suscribirse).
+    const visTrialStartedAt = await ensureVisTrialStarted(context.clientId, context.visTrialStartedAt);
+    if (!hasVisAssistantAccess(context.plan, visTrialStartedAt)) {
+      return NextResponse.json(
+        {
+          error:
+            "Tu mes de prueba gratis de VIS ya terminó — VIS es una funcionalidad del plan Intelligence. Actualiza tu plan a Intelligence para seguir usando el asistente.",
+        },
+        { status: 403 }
+      );
     }
 
     const messageCount = await countMessagesThisMonth(context.clientId);
@@ -249,4 +264,5 @@ ${factsText}`;
     );
   }
 }
+
 
