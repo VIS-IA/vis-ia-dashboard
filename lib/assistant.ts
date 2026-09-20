@@ -10,10 +10,17 @@ export interface AssistantMessage {
 // Tope de seguridad, no una barrera comercial — ver nota en el endpoint.
 const MONTHLY_MESSAGE_LIMIT = 150;
 
+export interface AssistantReportItem {
+  titulo: string;
+  descripcion: string;
+  nivel: string; // impacto | potencial, según la tabla de origen
+}
+
 /**
  * Todo lo que el asistente necesita saber del negocio para responder:
- * quién es, su último reporte, y (solo Pro+) los hechos que el propio
- * cliente ha confirmado sobre su negocio en conversaciones anteriores.
+ * quién es, su último reporte COMPLETO (no solo el resumen), y (solo
+ * Pro+) los hechos que el propio cliente ha confirmado sobre su
+ * negocio en conversaciones anteriores.
  * Nunca incluye datos de otro cliente — todo viene de una sola fila,
  * filtrada por user_id vía RLS.
  */
@@ -26,6 +33,9 @@ export async function getAssistantContext(): Promise<{
   lastAnalysis: string | null;
   visScore: number | null;
   resumenEjecutivo: string | null;
+  losses: AssistantReportItem[];
+  opportunities: AssistantReportItem[];
+  actions: { texto: string; prioridad: string }[];
   facts: { category: string; fact: string }[];
 } | null> {
   const supabase = createClient();
@@ -43,13 +53,51 @@ export async function getAssistantContext(): Promise<{
 
   const { data: report } = await supabase
     .from("reports")
-    .select("analysis_date, vis_score_current, resumen_ejecutivo")
+    .select("id, analysis_date, vis_score_current, resumen_ejecutivo")
     .eq("client_id", client.id)
     .order("analysis_date", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   const plan = (client.plan as PlanTier) ?? "diagnostic";
+
+  // El reporte completo del cliente — el asistente nunca debe pedirle
+  // al cliente que se lo comparta, porque VIS IA ya lo tiene todo aquí.
+  let losses: AssistantReportItem[] = [];
+  let opportunities: AssistantReportItem[] = [];
+  let actions: { texto: string; prioridad: string }[] = [];
+
+  if (report?.id) {
+    const [lossesRes, opportunitiesRes, actionsRes] = await Promise.all([
+      supabase
+        .from("losses")
+        .select("titulo, descripcion, impacto")
+        .eq("report_id", report.id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("opportunities")
+        .select("titulo, descripcion, potencial")
+        .eq("report_id", report.id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("actions")
+        .select("texto, prioridad")
+        .eq("report_id", report.id)
+        .order("sort_order", { ascending: true }),
+    ]);
+
+    losses = (lossesRes.data ?? []).map((l) => ({
+      titulo: l.titulo,
+      descripcion: l.descripcion,
+      nivel: l.impacto,
+    }));
+    opportunities = (opportunitiesRes.data ?? []).map((o) => ({
+      titulo: o.titulo,
+      descripcion: o.descripcion,
+      nivel: o.potencial,
+    }));
+    actions = actionsRes.data ?? [];
+  }
 
   // El aprendizaje continuo (guardar y reutilizar hechos del negocio)
   // es una diferencia de Pro+ — Diagnostic solo consulta su diagnóstico.
@@ -74,6 +122,9 @@ export async function getAssistantContext(): Promise<{
     lastAnalysis: report?.analysis_date ?? null,
     visScore: report?.vis_score_current ?? null,
     resumenEjecutivo: report?.resumen_ejecutivo ?? null,
+    losses,
+    opportunities,
+    actions,
     facts,
   };
 }
@@ -140,3 +191,4 @@ export async function addClientFact(clientId: string, category: string, fact: st
     verified: true,
   });
 }
+
