@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { listClientsOverview } from "@/lib/adminQueries";
 import AdminPageLayout from "@/components/AdminPageLayout";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +13,13 @@ export default async function AdminClientesPage() {
       title="Clientes"
       subtitle="Editar plan, estado y datos de contacto de cada cliente"
     >
+      <Link
+        href="/admin/clientes/nuevo"
+        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg px-4 py-2.5 mb-4"
+      >
+        <Plus size={16} /> Nuevo cliente
+      </Link>
+
       {clients.length === 0 ? (
         <p className="text-sm text-slate-500">Todavía no hay clientes registrados.</p>
       ) : (
