@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getClientById } from "@/lib/adminQueries";
 import AdminPageLayout from "@/components/AdminPageLayout";
 import AdminClientEditForm from "@/components/AdminClientEditForm";
+import AdminDeleteClientForm from "@/components/AdminDeleteClientForm";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,8 @@ export default async function AdminClientDetailPage({
           próxima entrega — por ahora se hace directamente en Supabase.
         </p>
       </div>
+
+      <AdminDeleteClientForm clientId={client.id} businessName={client.businessName} />
     </AdminPageLayout>
   );
 }
