@@ -107,13 +107,48 @@ export async function POST(request: NextRequest) {
         ? context.actions.map((a) => `- [${a.prioridad}] ${a.texto}`).join("\n")
         : "Ninguna registrada en el reporte.";
 
+    const reputationText = context.reputation
+      ? [
+          `Calificación promedio: ${context.reputation.avgRating ?? "N/D"}/5`,
+          `Reseñas totales: ${context.reputation.totalReviews ?? "N/D"}`,
+          `Positivas: ${context.reputation.positiveCount ?? "N/D"}, Neutrales: ${context.reputation.neutralCount ?? "N/D"}, Negativas: ${context.reputation.negativeCount ?? "N/D"}`,
+          `Tasa de respuesta a reseñas: ${context.reputation.responseRatePercent ?? "N/D"}%`,
+          `Reseñas negativas SIN responder: ${context.reputation.unrespondedNegative ?? "N/D"}`,
+        ].join("\n")
+      : "No hay datos de reputación (Google) en el reporte.";
+
+    const otherReputationsText =
+      context.otherReputations.length > 0
+        ? context.otherReputations
+            .map((o) => `- ${o.platform}: ${o.rating ?? "N/D"}/${o.scale ?? "N/D"} (${o.reviewCount ?? "N/D"} reseñas)`)
+            .join("\n")
+        : "No hay datos de otras plataformas en el reporte.";
+
+    const competitorsText =
+      context.competitors.length > 0
+        ? context.competitors
+            .map(
+              (c) =>
+                `- ${c.name}${c.isYou ? " (este negocio)" : ""}: ${c.rating ?? "N/D"}/5, ${c.reviewCount ?? "N/D"} reseñas${c.notes ? ` — ${c.notes}` : ""}`
+            )
+            .join("\n")
+        : "No hay competidores registrados en el reporte.";
+
+    const experienceText = context.experienceSummary
+      ? [
+          `Puntaje de sentimiento: ${context.experienceSummary.sentimentScore ?? "N/D"}`,
+          `Menciones positivas: ${context.experienceSummary.positiveMentions ?? "N/D"}, negativas: ${context.experienceSummary.negativeMentions ?? "N/D"}`,
+          `Tema principal detectado: ${context.experienceSummary.topTheme ?? "N/D"}`,
+        ].join("\n")
+      : "No hay datos de experiencia del cliente en el reporte.";
+
     const learnsFromBusiness = planAtLeast(context.plan, "pro");
 
     const systemPrompt = `Te llamas ${ASSISTANT_NAME}, el asistente de IA de VIS IA para el negocio "${context.businessName}" (${context.businessType}, ${context.location}). Preséntate siempre como ${ASSISTANT_NAME}.
 
 REGLAS ESTRICTAS:
 - Solo puedes hablar del negocio de este cliente. Si preguntan algo que no tiene que ver con su negocio, dilo claramente y redirige la conversación.
-- Ya tienes el reporte diagnóstico completo de este negocio (ver abajo). NUNCA le pidas al cliente que te comparta o te envíe su reporte — tú ya lo tienes. Si algo puntual no está en la información de abajo, dilo así de simple ("no tengo ese dato en tu diagnóstico"), sin más.
+- Ya tienes el reporte diagnóstico completo de este negocio (ver abajo), incluyendo reputación, competencia y experiencia del cliente. NUNCA le pidas al cliente que te comparta o te envíe su reporte, ni le preguntes datos públicos que VIS IA ya investigó (ej. cuántas reseñas negativas tiene, su calificación, quiénes son sus competidores) — todo eso ya está abajo. Solo puedes preguntarle datos INTERNOS que solo el dueño/gerente sabría (algo que no es público y VIS IA no puede investigar por su cuenta). Si algo puntual no está en la información de abajo, dilo así de simple ("no tengo ese dato en tu diagnóstico"), sin más.
 - Nunca inventes cifras, reseñas, ni datos que no estén en la información de abajo.
 - Nunca especules sobre problemas técnicos, conexiones, sesiones o cómo estás integrado en el panel — eso no lo puedes verificar y no es tu tema. Si falta un dato, dilo directo, sin teorías sobre la causa.
 - No le des la razón automáticamente al cliente si afirma algo que contradice la información que tienes. Sé cortés pero mantente en lo que sabes — no cambies de postura solo porque el cliente insiste.
@@ -139,6 +174,18 @@ ${opportunitiesText}
 
 Plan de acción recomendado:
 ${actionsText}
+
+Reputación (Google):
+${reputationText}
+
+Reputación en otras plataformas:
+${otherReputationsText}
+
+Competencia:
+${competitorsText}
+
+Experiencia del cliente:
+${experienceText}
 
 Datos confirmados por el cliente:
 ${factsText}`;
@@ -202,3 +249,4 @@ ${factsText}`;
     );
   }
 }
+
