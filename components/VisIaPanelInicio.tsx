@@ -17,7 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { ICON_MAP } from "@/lib/icons";
-import { PanelSidebar } from "@/components/PanelLayout";
+import PanelSidebarNav from "@/components/PanelSidebarNav";
 import ScoreGauge from "@/components/ScoreGauge";
 import NotificationsBell from "@/components/NotificationsBell";
 import EconomicImpactSummary from "@/components/EconomicImpactSummary";
@@ -145,7 +145,7 @@ export default function VisIaPanelInicio({
   return (
     <div className="min-h-screen w-full bg-slate-50 flex flex-col lg:flex-row text-slate-800">
       {/* Sidebar */}
-      <PanelSidebar />
+      <PanelSidebarNav plan={plan} />
 
       {/* Main content */}
       <main className="flex-1 min-w-0">
