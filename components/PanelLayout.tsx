@@ -1,160 +1,18 @@
-"use client";
-
-import { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
-import {
-  Home,
-  Star,
-  Sparkles,
-  Users,
-  BarChart3,
-  CheckSquare,
-  FileText,
-  UserCircle,
-  ClipboardList,
-  Camera,
-  Menu,
-  X,
-  TrendingUp,
-  MessageCircle,
-  GitCompare,
-} from "lucide-react";
-
-// Número de WhatsApp del negocio, en formato internacional sin signos:
-// +1 678 400 7344 -> 16784007344
-const WHATSAPP_NUMBER = "16784007344";
-const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-  "Hola, necesito ayuda con mi panel VIS IA"
-)}`;
-
-export const NAV_ITEMS = [
-  { icon: Home, label: "Inicio", href: "/panel" },
-  { icon: MessageCircle, label: "Asistente IA", href: "/panel/asistente" },
-  { icon: ClipboardList, label: "15 Preguntas", href: "/panel/preguntas" },
-  { icon: BarChart3, label: "VIS Score", href: "/panel/vis-score" },
-  { icon: GitCompare, label: "Comparación Completa", href: "/panel/comparacion" },
-  { icon: TrendingUp, label: "Análisis de Tendencias", href: "/panel/tendencias" },
-  { icon: Star, label: "Pérdida Invisible", href: "/panel/perdidas" },
-  { icon: Sparkles, label: "Valor Oculto", href: "/panel/oportunidades" },
-  { icon: Star, label: "Reputación", href: "/panel/reputacion" },
-  { icon: Users, label: "Experiencia del Cliente", href: "/panel/experiencia" },
-  { icon: BarChart3, label: "Competencia", href: "/panel/competencia" },
-  { icon: Camera, label: "Evidencia Visual", href: "/panel/evidencia" },
-  { icon: CheckSquare, label: "Plan de Acción", href: "/panel/plan-accion" },
-  { icon: FileText, label: "Reportes", href: "/panel/reportes" },
-  { icon: UserCircle, label: "Mi Cuenta", href: "/panel/mi-cuenta" },
-];
+import PanelSidebarNav from "@/components/PanelSidebarNav";
+import { getClientPlan } from "@/lib/queries";
 
 /**
  * PanelSidebar
  * -------------
- * Desktop: barra lateral fija, siempre visible (como antes).
- * Celular: se esconde fuera de pantalla; un botón de hamburguesa en
- * una barra superior la despliega encima del contenido, con un fondo
- * oscuro detrás que la cierra al tocarlo.
+ * Wrapper del lado del servidor: obtiene el plan del cliente que tiene
+ * la sesión iniciada y se lo pasa a PanelSidebarNav (el componente
+ * interactivo del lado del cliente que dibuja el menú agrupado por
+ * plan). Así ninguna página necesita ir a buscar el plan solo para
+ * poder mostrar el menú.
  */
-export function PanelSidebar() {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-
-  const sidebarContent = (
-    <>
-      <div>
-        <div className="px-6 py-6 border-b border-white/10 flex items-center justify-between lg:justify-center">
-          <div className="bg-white rounded-xl p-2">
-            <Image
-              src="/logo-vis-ia.png"
-              alt="VIS IA Federal Consulting"
-              width={140}
-              height={140}
-              className="w-full h-auto max-w-[120px] lg:max-w-none"
-              priority
-            />
-          </div>
-          <button
-            onClick={() => setOpen(false)}
-            className="lg:hidden text-slate-400 p-2"
-            aria-label="Cerrar menú"
-          >
-            <X size={22} />
-          </button>
-        </div>
-
-        <nav className="px-3 py-4 space-y-1">
-          {NAV_ITEMS.map(({ icon: Icon, label, href }) => {
-            const active = pathname === href;
-            return (
-              <Link
-                key={label}
-                href={href}
-                onClick={() => setOpen(false)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                  active
-                    ? "bg-blue-600 text-white font-medium"
-                    : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
-                }`}
-              >
-                <Icon size={18} />
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-
-      <div className="p-4 space-y-3">
-        <div className="bg-white/5 rounded-xl p-4">
-          <p className="text-sm font-medium text-slate-200">¿Necesitas ayuda?</p>
-          <p className="text-xs text-slate-500 mt-1">Escríbenos por WhatsApp</p>
-        </div>
-        <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 text-sm text-slate-300 border border-white/10 rounded-lg py-2.5 hover:bg-white/5">
-          Soporte VIS IA
-        </a>
-      </div>
-    </>
-  );
-
-  return (
-    <>
-      {/* Barra superior solo en celular */}
-      <div className="lg:hidden sticky top-0 z-30 bg-[#0b1220] text-white flex items-center justify-between px-4 py-3">
-        <button
-          onClick={() => setOpen(true)}
-          aria-label="Abrir menú"
-          className="p-1.5 -ml-1.5"
-        >
-          <Menu size={22} />
-        </button>
-        <div className="flex items-baseline gap-1">
-          <span className="font-bold text-base tracking-tight">VIS</span>
-          <span className="text-blue-400 font-bold text-base tracking-tight">IA</span>
-        </div>
-        <div className="w-8" />
-      </div>
-
-      {/* Fondo oscuro al abrir el menú en celular */}
-      {open && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={() => setOpen(false)}
-        />
-      )}
-
-      {/* Sidebar: fijo en desktop, deslizable en celular */}
-      <aside
-        className={`
-          w-72 lg:w-64 shrink-0 bg-[#0b1220] text-slate-300 flex flex-col justify-between
-          fixed lg:static inset-y-0 left-0 z-50 overflow-y-auto overscroll-contain
-          transform transition-transform duration-200 ease-in-out
-          ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0
-        `}
-      >
-        {sidebarContent}
-      </aside>
-    </>
-  );
+export async function PanelSidebar() {
+  const plan = await getClientPlan();
+  return <PanelSidebarNav plan={plan} />;
 }
 
 /**
@@ -162,7 +20,7 @@ export function PanelSidebar() {
  * header, so pages feel like part of the same app instead of a jump to
  * a different design.
  */
-export default function PanelLayout({
+export default async function PanelLayout({
   title,
   subtitle,
   children,
