@@ -71,6 +71,7 @@ export async function getAssistantContext(): Promise<{
     topTheme: string | null;
   } | null;
   facts: { category: string; fact: string }[];
+  visTrialStartedAt: string | null;
 } | null> {
   const supabase = createClient();
   const {
@@ -80,7 +81,7 @@ export async function getAssistantContext(): Promise<{
 
   const { data: client } = await supabase
     .from("clients")
-    .select("id, business_name, business_type, location, plan")
+    .select("id, business_name, business_type, location, plan, vis_trial_started_at")
     .eq("user_id", user.id)
     .single();
   if (!client) return null;
@@ -242,7 +243,32 @@ export async function getAssistantContext(): Promise<{
     competitors,
     experienceSummary,
     facts,
+    visTrialStartedAt: client.vis_trial_started_at ?? null,
   };
+}
+
+/**
+ * Si este negocio todavía no ha empezado su mes de prueba de VIS
+ * (Diagnostic/Pro), lo marca como iniciado ahora mismo y devuelve esa
+ * fecha. Si ya lo tenía iniciado, devuelve la fecha existente sin
+ * tocarla. Se guarda una sola vez por negocio — re-suscribirse nunca
+ * reinicia esta fecha.
+ */
+export async function ensureVisTrialStarted(
+  clientId: string,
+  currentValue: string | null
+): Promise<string> {
+  if (currentValue) return currentValue;
+
+  const startedAt = new Date().toISOString();
+  const supabase = createClient();
+  await supabase
+    .from("clients")
+    .update({ vis_trial_started_at: startedAt })
+    .eq("id", clientId)
+    .is("vis_trial_started_at", null);
+
+  return startedAt;
 }
 
 export async function getAssistantHistory(clientId: string, limit = 20): Promise<AssistantMessage[]> {
