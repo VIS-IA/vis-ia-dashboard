@@ -16,6 +16,31 @@ export interface AssistantReportItem {
   nivel: string; // impacto | potencial, según la tabla de origen
 }
 
+export interface AssistantReputation {
+  avgRating: number | null;
+  totalReviews: number | null;
+  positiveCount: number | null;
+  neutralCount: number | null;
+  negativeCount: number | null;
+  responseRatePercent: number | null;
+  unrespondedNegative: number | null;
+}
+
+export interface AssistantOtherReputation {
+  platform: string;
+  rating: number | null;
+  scale: number | null;
+  reviewCount: number | null;
+}
+
+export interface AssistantCompetitor {
+  name: string;
+  rating: number | null;
+  reviewCount: number | null;
+  notes: string | null;
+  isYou: boolean;
+}
+
 /**
  * Todo lo que el asistente necesita saber del negocio para responder:
  * quién es, su último reporte COMPLETO (no solo el resumen), y (solo
@@ -36,6 +61,15 @@ export async function getAssistantContext(): Promise<{
   losses: AssistantReportItem[];
   opportunities: AssistantReportItem[];
   actions: { texto: string; prioridad: string }[];
+  reputation: AssistantReputation | null;
+  otherReputations: AssistantOtherReputation[];
+  competitors: AssistantCompetitor[];
+  experienceSummary: {
+    sentimentScore: number | null;
+    positiveMentions: number | null;
+    negativeMentions: number | null;
+    topTheme: string | null;
+  } | null;
   facts: { category: string; fact: string }[];
 } | null> {
   const supabase = createClient();
@@ -67,8 +101,26 @@ export async function getAssistantContext(): Promise<{
   let opportunities: AssistantReportItem[] = [];
   let actions: { texto: string; prioridad: string }[] = [];
 
+  let reputation: AssistantReputation | null = null;
+  let otherReputations: AssistantOtherReputation[] = [];
+  let competitors: AssistantCompetitor[] = [];
+  let experienceSummary: {
+    sentimentScore: number | null;
+    positiveMentions: number | null;
+    negativeMentions: number | null;
+    topTheme: string | null;
+  } | null = null;
+
   if (report?.id) {
-    const [lossesRes, opportunitiesRes, actionsRes] = await Promise.all([
+    const [
+      lossesRes,
+      opportunitiesRes,
+      actionsRes,
+      reputationRes,
+      otherReputationsRes,
+      competitorsRes,
+      experienceRes,
+    ] = await Promise.all([
       supabase
         .from("losses")
         .select("titulo, descripcion, impacto")
@@ -84,6 +136,28 @@ export async function getAssistantContext(): Promise<{
         .select("texto, prioridad")
         .eq("report_id", report.id)
         .order("sort_order", { ascending: true }),
+      supabase
+        .from("reputation_details")
+        .select(
+          "avg_rating, total_reviews, positive_count, neutral_count, negative_count, response_rate_percent, unresponded_negative"
+        )
+        .eq("report_id", report.id)
+        .maybeSingle(),
+      supabase
+        .from("other_reputations")
+        .select("platform, rating, scale, review_count")
+        .eq("report_id", report.id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("competitors")
+        .select("name, rating, review_count, notes, is_you")
+        .eq("report_id", report.id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("experience_negocio")
+        .select("sentiment_score, positive_mentions, negative_mentions, top_theme")
+        .eq("report_id", report.id)
+        .maybeSingle(),
     ]);
 
     losses = (lossesRes.data ?? []).map((l) => ({
@@ -97,6 +171,44 @@ export async function getAssistantContext(): Promise<{
       nivel: o.potencial,
     }));
     actions = actionsRes.data ?? [];
+
+    if (reputationRes.data) {
+      const r = reputationRes.data;
+      reputation = {
+        avgRating: r.avg_rating,
+        totalReviews: r.total_reviews,
+        positiveCount: r.positive_count,
+        neutralCount: r.neutral_count,
+        negativeCount: r.negative_count,
+        responseRatePercent: r.response_rate_percent,
+        unrespondedNegative: r.unresponded_negative,
+      };
+    }
+
+    otherReputations = (otherReputationsRes.data ?? []).map((o) => ({
+      platform: o.platform,
+      rating: o.rating,
+      scale: o.scale,
+      reviewCount: o.review_count,
+    }));
+
+    competitors = (competitorsRes.data ?? []).map((c) => ({
+      name: c.name,
+      rating: c.rating,
+      reviewCount: c.review_count,
+      notes: c.notes,
+      isYou: c.is_you,
+    }));
+
+    if (experienceRes.data) {
+      const e = experienceRes.data;
+      experienceSummary = {
+        sentimentScore: e.sentiment_score,
+        positiveMentions: e.positive_mentions,
+        negativeMentions: e.negative_mentions,
+        topTheme: e.top_theme,
+      };
+    }
   }
 
   // El aprendizaje continuo (guardar y reutilizar hechos del negocio)
@@ -125,6 +237,10 @@ export async function getAssistantContext(): Promise<{
     losses,
     opportunities,
     actions,
+    reputation,
+    otherReputations,
+    competitors,
+    experienceSummary,
     facts,
   };
 }
