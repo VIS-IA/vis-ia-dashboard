@@ -1,7 +1,7 @@
 import { getDashboardData, getReputationDetail, getExperienceDetail, getClientPlan } from "@/lib/queries";
 import type { DashboardMetric, ExperienceSignal } from "@/lib/types";
 import PanelLayout from "@/components/PanelLayout";
-import UpgradeNotice from "@/components/UpgradeNotice";
+import LockedPreview from "@/components/LockedPreview";
 import { planAtLeast } from "@/lib/plan";
 import { ICON_MAP } from "@/lib/icons";
 import { ArrowUp, ArrowDown, TrendingUp } from "lucide-react";
@@ -77,7 +77,28 @@ export default async function ComparacionPage() {
         title="Comparación Completa"
         subtitle="Antes y después de tu negocio, reporte a reporte"
       >
-        <UpgradeNotice feature="La comparación completa" minPlan="pro" />
+        <LockedPreview feature="La comparación completa" minPlan="pro">
+          <div className="space-y-6 max-w-2xl">
+            <div className="bg-white rounded-xl border border-slate-200 p-5">
+              <h3 className="text-sm font-semibold text-blue-600 mb-1 flex items-center gap-2">
+                <TrendingUp size={15} /> VIS Score
+              </h3>
+              <ChangeRow label="Puntaje general" current={71} previous={58} currentSuffix="/100" previousSuffix="/100" />
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-200 p-5">
+              <h3 className="text-sm font-semibold text-slate-800 mb-1">Métricas de actividad</h3>
+              <ChangeRow label="Reseñas totales" current={214} previous={178} />
+              <ChangeRow label="Tráfico perfil Google" current={1580} previous={1240} />
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-200 p-5">
+              <h3 className="text-sm font-semibold text-amber-600 mb-1">Reputación</h3>
+              <ChangeRow label="Calificación promedio" current="4.3" previous="3.9" />
+              <ChangeRow label="Reseñas totales" current={214} previous={178} />
+            </div>
+          </div>
+        </LockedPreview>
       </PanelLayout>
     );
   }

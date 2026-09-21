@@ -43,11 +43,13 @@ const PLAN_CONTENT: Record<PlanTier, PlanContent> = {
   },
   pro: {
     title: "Plan Pro",
-    tagline: "Todo lo de Diagnostic, más comparación completa contra tu competencia.",
+    tagline: "Todo lo de Diagnostic, más el seguimiento de tu propio progreso mes a mes.",
     items: [
       { label: "Todo lo incluido en el plan Diagnostic" },
-      { label: "Comparación Completa — tu negocio frente a la competencia, lado a lado", href: "/panel/comparacion" },
+      { label: "Comparación Completa — tu negocio antes vs. ahora, reporte a reporte", href: "/panel/comparacion" },
+      { label: "Evolución del VIS Score en el tiempo (gráfico histórico)", href: "/panel/vis-score" },
       { label: "1 mes gratis del Asistente VIS (IA) al activarlo por primera vez" },
+      { label: "Análisis mensual garantizado — tu negocio se re-analiza todos los meses" },
     ],
   },
   intelligence: {
@@ -57,6 +59,7 @@ const PLAN_CONTENT: Record<PlanTier, PlanContent> = {
       { label: "Todo lo incluido en los planes Diagnostic y Pro" },
       { label: "Asistente VIS (IA) con acceso permanente — pregúntale lo que quieras sobre tu negocio", href: "/panel/asistente" },
       { label: "Análisis de Tendencias — evolución de tu negocio en el tiempo", href: "/panel/tendencias" },
+      { label: "Frecuencia de análisis más alta que Pro" },
     ],
     note:
       "Seguimos ampliando las funciones avanzadas de Intelligence — lo que ves arriba ya está disponible hoy en tu panel.",
