@@ -17,6 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { ICON_MAP } from "@/lib/icons";
+import { jsPDF } from "jspdf";
 import PanelSidebarNav from "@/components/PanelSidebarNav";
 import ScoreGauge from "@/components/ScoreGauge";
 import NotificationsBell from "@/components/NotificationsBell";
@@ -142,6 +143,139 @@ export default function VisIaPanelInicio({
     URL.revokeObjectURL(url);
   }
 
+  // Reporte en PDF con marca VIS IA — beneficio de los planes Pro e
+  // Intelligence. El .txt de arriba se queda como está para Diagnostic.
+  async function downloadReportPdf() {
+    const doc = new jsPDF({ unit: "pt", format: "letter" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const marginX = 48;
+    const contentWidth = pageWidth - marginX * 2;
+    let y = 56;
+
+    function ensureSpace(next: number) {
+      if (y + next > pageHeight - 48) {
+        doc.addPage();
+        y = 56;
+      }
+    }
+
+    function sectionTitle(text: string) {
+      ensureSpace(28);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(30, 64, 175); // azul VIS IA
+      doc.text(text, marginX, y);
+      y += 16;
+      doc.setDrawColor(226, 232, 240);
+      doc.line(marginX, y - 10, pageWidth - marginX, y - 10);
+    }
+
+    function bodyText(text: string, opts?: { bold?: boolean; gap?: number }) {
+      doc.setFont("helvetica", opts?.bold ? "bold" : "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(51, 65, 85);
+      const lines = doc.splitTextToSize(text, contentWidth);
+      for (const line of lines) {
+        ensureSpace(14);
+        doc.text(line, marginX, y);
+        y += 14;
+      }
+      y += opts?.gap ?? 4;
+    }
+
+    // Encabezado con logo
+    try {
+      const logoRes = await fetch("/logo-vis-ia.png");
+      const logoBlob = await logoRes.blob();
+      const logoDataUrl: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(logoBlob);
+      });
+      doc.addImage(logoDataUrl, "PNG", marginX, y - 24, 40, 40);
+    } catch {
+      // Si el logo no carga, el PDF se genera igual sin él.
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(15, 23, 42);
+    doc.text(d.business.name, marginX + 52, y);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`${d.business.location}  •  ID: ${d.business.visId}`, marginX + 52, y + 16);
+    doc.text(`Último análisis: ${d.lastAnalysis}`, marginX + 52, y + 30);
+    y += 56;
+
+    // VIS Score
+    sectionTitle("VIS Score");
+    if (d.visScore.current !== null) {
+      bodyText(`${d.visScore.current}/100 — ${d.visScore.status}`, { bold: true });
+      if (d.visScore.previous !== null && d.visScore.delta !== null) {
+        bodyText(
+          `Anterior: ${d.visScore.previous}/100  •  Cambio: ${d.visScore.delta > 0 ? "+" : ""}${d.visScore.delta}`
+        );
+      }
+      bodyText(d.visScore.statusNote);
+    } else {
+      bodyText("Pendiente — falta completar las 15 preguntas internas.");
+    }
+
+    // Acción recomendada
+    sectionTitle("Acción recomendada #1");
+    bodyText(d.accionRecomendada.titulo, { bold: true });
+    bodyText(d.accionRecomendada.motivo, { gap: 10 });
+
+    // Métricas
+    sectionTitle("Métricas");
+    d.metrics.forEach((m) => {
+      bodyText(`${m.label}: ${m.value}${m.suffix ?? ""}  (antes: ${m.previous}, cambio: ${m.delta})`);
+    });
+    y += 6;
+
+    // Pérdidas
+    if (d.perdidas.length > 0) {
+      sectionTitle("Pérdidas Invisibles");
+      d.perdidas.forEach((p) => bodyText(`[${p.impacto}] ${p.titulo}: ${p.descripcion}`, { gap: 6 }));
+    }
+
+    // Oportunidades
+    if (d.oportunidades.length > 0) {
+      sectionTitle("Oportunidades de Valor Oculto");
+      d.oportunidades.forEach((o) =>
+        bodyText(`[${o.potencial}] ${o.titulo}: ${o.descripcion}`, { gap: 6 })
+      );
+    }
+
+    // Plan de acción
+    if (d.acciones.length > 0) {
+      sectionTitle("Plan de Acción");
+      d.acciones.forEach((a, i) => {
+        bodyText(`${i + 1}. [${a.prioridad}] ${a.texto}`, { bold: true, gap: 2 });
+        if (a.problema) bodyText(`Problema: ${a.problema}`);
+        if (a.evidencia) bodyText(`Evidencia: ${a.evidencia}`);
+        if (a.causaProbable) bodyText(`Causa probable: ${a.causaProbable}`);
+        if (a.detalle) bodyText(`Impacto: ${a.detalle}`);
+        if (a.metrica) bodyText(`Métrica de éxito: ${a.metrica}`, { gap: 10 });
+      });
+    }
+
+    ensureSpace(30);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text(
+      "Este es un resumen del análisis. Para el detalle completo entra a tu panel VIS IA en línea.",
+      marginX,
+      y
+    );
+
+    doc.save(`VIS-IA-reporte-${d.business.visId}.pdf`);
+  }
+
   return (
     <div className="min-h-screen w-full bg-slate-50 flex flex-col lg:flex-row text-slate-800">
       {/* Sidebar */}
@@ -174,10 +308,13 @@ export default function VisIaPanelInicio({
               <p className="text-sm font-medium text-slate-700">{d.lastAnalysis}</p>
             </div>
             <button
-              onClick={downloadReport}
+              onClick={canCompare ? downloadReportPdf : downloadReport}
               className="order-1 lg:order-2 flex items-center gap-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg px-3 py-2 hover:bg-slate-50 whitespace-nowrap"
             >
-              <Download size={15} /> <span className="hidden sm:inline">Descargar reporte</span>
+              <Download size={15} />{" "}
+              <span className="hidden sm:inline">
+                Descargar reporte{canCompare ? " (PDF)" : ""}
+              </span>
             </button>
             <div className="order-2 lg:order-3">
               {canCompare && <NotificationsBell />}
