@@ -22,7 +22,7 @@ import PanelSidebarNav from "@/components/PanelSidebarNav";
 import ScoreGauge from "@/components/ScoreGauge";
 import NotificationsBell from "@/components/NotificationsBell";
 import EconomicImpactSummary from "@/components/EconomicImpactSummary";
-import { planAtLeast, type PlanTier } from "@/lib/plan";
+import { planAtLeast, PLAN_LABELS, type PlanTier } from "@/lib/plan";
 import { getVisStatusPresentation } from "@/lib/visStatus";
 import type { DashboardData } from "@/lib/types";
 
@@ -145,46 +145,122 @@ export default function VisIaPanelInicio({
 
   // Reporte en PDF con marca VIS IA — beneficio de los planes Pro e
   // Intelligence. El .txt de arriba se queda como está para Diagnostic.
+  // Diseño tipo "tarjetas" (igual look & feel que el panel), no un bloque
+  // de texto plano — banda de marca, insignia de color para el VIS
+  // Score, etiquetas de color por prioridad/impacto, y pie de página con
+  // numeración.
   async function downloadReportPdf() {
     const doc = new jsPDF({ unit: "pt", format: "letter" });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const marginX = 48;
+    const marginX = 40;
     const contentWidth = pageWidth - marginX * 2;
-    let y = 56;
+    const footerY = pageHeight - 28;
+    let y = 0;
+    let page = 1;
+
+    // Paleta — igual a la del panel (Tailwind slate/blue/emerald/amber/red)
+    const C = {
+      brand: [37, 99, 235] as [number, number, number],
+      ink: [15, 23, 42] as [number, number, number],
+      body: [51, 65, 85] as [number, number, number],
+      muted: [100, 116, 139] as [number, number, number],
+      faint: [148, 163, 184] as [number, number, number],
+      line: [226, 232, 240] as [number, number, number],
+      bgSoft: [248, 250, 252] as [number, number, number],
+      white: [255, 255, 255] as [number, number, number],
+      emerald: [5, 150, 105] as [number, number, number],
+      emeraldBg: [220, 252, 231] as [number, number, number],
+      amber: [180, 83, 9] as [number, number, number],
+      amberBg: [254, 243, 199] as [number, number, number],
+      red: [220, 38, 38] as [number, number, number],
+      redBg: [254, 226, 226] as [number, number, number],
+      blue: [29, 78, 216] as [number, number, number],
+      blueBg: [219, 234, 254] as [number, number, number],
+      slateTag: [71, 85, 105] as [number, number, number],
+      slateTagBg: [226, 232, 240] as [number, number, number],
+    };
+    const setColor = (fn: (r: number, g: number, b: number) => void, rgb: [number, number, number]) =>
+      fn(rgb[0], rgb[1], rgb[2]);
+
+    function statusColors(status: string): [[number, number, number], [number, number, number]] {
+      if (status === "MEJORANDO") return [C.emerald, C.emeraldBg];
+      if (status === "DECLINANDO") return [C.red, C.redBg];
+      if (status === "REVISAR_TENDENCIA") return [C.amber, C.amberBg];
+      if (status === "ESTABLE") return [C.blue, C.blueBg];
+      return [C.slateTag, C.slateTagBg];
+    }
+    function priorityColors(p: string | null | undefined): [[number, number, number], [number, number, number]] {
+      const k = (p || "").toLowerCase();
+      if (k === "alta" || k === "alto") return [C.red, C.redBg];
+      if (k === "media" || k === "medio") return [C.amber, C.amberBg];
+      return [C.slateTag, C.slateTagBg];
+    }
+    function potencialColors(p: string | null | undefined): [[number, number, number], [number, number, number]] {
+      const k = (p || "").toLowerCase();
+      if (k === "alto") return [C.emerald, C.emeraldBg];
+      if (k === "medio") return [C.blue, C.blueBg];
+      return [C.slateTag, C.slateTagBg];
+    }
+
+    function drawFooter() {
+      setColor(doc.setDrawColor.bind(doc), C.line);
+      doc.setLineWidth(0.75);
+      doc.line(marginX, footerY - 10, pageWidth - marginX, footerY - 10);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      setColor(doc.setTextColor.bind(doc), C.faint);
+      doc.text("VIS IA · Reporte generado automáticamente", marginX, footerY);
+      doc.text(`Página ${page}`, pageWidth - marginX, footerY, { align: "right" });
+    }
+
+    function newPage() {
+      drawFooter();
+      doc.addPage();
+      page += 1;
+      y = 40;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      setColor(doc.setTextColor.bind(doc), C.ink);
+      doc.text(d.business.name, marginX, y);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      setColor(doc.setTextColor.bind(doc), C.faint);
+      doc.text("Reporte VIS IA", pageWidth - marginX, y, { align: "right" });
+      y += 10;
+      setColor(doc.setDrawColor.bind(doc), C.line);
+      doc.setLineWidth(0.75);
+      doc.line(marginX, y, pageWidth - marginX, y);
+      y += 22;
+    }
 
     function ensureSpace(next: number) {
-      if (y + next > pageHeight - 48) {
-        doc.addPage();
-        y = 56;
-      }
+      if (y + next > footerY - 16) newPage();
     }
 
-    function sectionTitle(text: string) {
-      ensureSpace(28);
+    function wrapped(text: string, size: number, font: "normal" | "bold" = "normal") {
+      doc.setFont("helvetica", font);
+      doc.setFontSize(size);
+      return doc.splitTextToSize(text, contentWidth - 32) as string[];
+    }
+
+    function pill(text: string, x: number, yTop: number, colors: [[number, number, number], [number, number, number]]) {
+      const [fg, bg] = colors;
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.setTextColor(30, 64, 175); // azul VIS IA
-      doc.text(text, marginX, y);
-      y += 16;
-      doc.setDrawColor(226, 232, 240);
-      doc.line(marginX, y - 10, pageWidth - marginX, y - 10);
+      doc.setFontSize(7.5);
+      const w = doc.getTextWidth(text) + 12;
+      setColor(doc.setFillColor.bind(doc), bg);
+      doc.roundedRect(x, yTop, w, 14, 7, 7, "F");
+      setColor(doc.setTextColor.bind(doc), fg);
+      doc.text(text, x + w / 2, yTop + 10, { align: "center" });
+      return w;
     }
 
-    function bodyText(text: string, opts?: { bold?: boolean; gap?: number }) {
-      doc.setFont("helvetica", opts?.bold ? "bold" : "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(51, 65, 85);
-      const lines = doc.splitTextToSize(text, contentWidth);
-      for (const line of lines) {
-        ensureSpace(14);
-        doc.text(line, marginX, y);
-        y += 14;
-      }
-      y += opts?.gap ?? 4;
-    }
-
-    // Encabezado con logo
+    // ---------- Encabezado (banda de marca, página 1) ----------
+    setColor(doc.setFillColor.bind(doc), C.brand);
+    doc.rect(0, 0, pageWidth, 108, "F");
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(marginX, 24, 48, 48, 8, 8, "F");
     try {
       const logoRes = await fetch("/logo-vis-ia.png");
       const logoBlob = await logoRes.blob();
@@ -194,85 +270,319 @@ export default function VisIaPanelInicio({
         reader.onerror = reject;
         reader.readAsDataURL(logoBlob);
       });
-      doc.addImage(logoDataUrl, "PNG", marginX, y - 24, 40, 40);
+      doc.addImage(logoDataUrl, "PNG", marginX + 6, 30, 36, 36);
     } catch {
       // Si el logo no carga, el PDF se genera igual sin él.
     }
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.setTextColor(15, 23, 42);
-    doc.text(d.business.name, marginX + 52, y);
+    doc.setFontSize(17);
+    setColor(doc.setTextColor.bind(doc), C.white);
+    doc.text(d.business.name, marginX + 62, 44);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`${d.business.location}  •  ID: ${d.business.visId}`, marginX + 52, y + 16);
-    doc.text(`Último análisis: ${d.lastAnalysis}`, marginX + 52, y + 30);
-    y += 56;
+    doc.setFontSize(9.5);
+    doc.setTextColor(219, 234, 254);
+    doc.text(`${d.business.location}  ·  ID: ${d.business.visId}`, marginX + 62, 60);
+    doc.text(`Último análisis: ${d.lastAnalysis}`, marginX + 62, 74);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(255, 255, 255);
+    doc.text("REPORTE VIS IA", pageWidth - marginX, 40, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(191, 219, 254);
+    doc.text(`Plan ${PLAN_LABELS[plan]}`, pageWidth - marginX, 52, { align: "right" });
+    y = 132;
 
-    // VIS Score
-    sectionTitle("VIS Score");
-    if (d.visScore.current !== null) {
-      bodyText(`${d.visScore.current}/100 — ${d.visScore.status}`, { bold: true });
-      if (d.visScore.previous !== null && d.visScore.delta !== null) {
-        bodyText(
-          `Anterior: ${d.visScore.previous}/100  •  Cambio: ${d.visScore.delta > 0 ? "+" : ""}${d.visScore.delta}`
-        );
+    function sectionLabel(text: string) {
+      ensureSpace(24);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11.5);
+      setColor(doc.setTextColor.bind(doc), C.ink);
+      doc.text(text.toUpperCase(), marginX, y);
+      y += 6;
+      setColor(doc.setDrawColor.bind(doc), C.brand);
+      doc.setLineWidth(2);
+      doc.line(marginX, y, marginX + 28, y);
+      y += 16;
+    }
+
+    // ---------- VIS Score ----------
+    {
+      if (d.visScore.current !== null) {
+        const [fg, bg] = statusColors(d.visScore.status);
+        const noteLines = wrapped(d.visScore.statusNote, 9);
+        const cardH = 64 + noteLines.length * 12;
+        ensureSpace(cardH + 14);
+        setColor(doc.setFillColor.bind(doc), C.bgSoft);
+        doc.roundedRect(marginX, y, contentWidth, cardH, 8, 8, "F");
+        setColor(doc.setFillColor.bind(doc), fg);
+        doc.roundedRect(marginX, y, 5, cardH, 2.5, 2.5, "F");
+
+        const badgeX = marginX + 24;
+        const badgeY = y + 14;
+        const badgeSize = 56;
+        setColor(doc.setFillColor.bind(doc), fg);
+        doc.circle(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, "F");
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(20);
+        setColor(doc.setTextColor.bind(doc), C.white);
+        doc.text(String(d.visScore.current), badgeX + badgeSize / 2, badgeY + badgeSize / 2 + 1, {
+          align: "center",
+          baseline: "middle",
+        });
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        doc.text("/ 100", badgeX + badgeSize / 2, badgeY + badgeSize / 2 + 14, {
+          align: "center",
+          baseline: "middle",
+        });
+
+        const txtX = badgeX + badgeSize + 20;
+        let ty = y + 20;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        setColor(doc.setTextColor.bind(doc), C.muted);
+        doc.text("VIS SCORE", txtX, ty);
+        ty += 16;
+        pill(d.visScore.status.replace(/_/g, " "), txtX, ty - 10, [fg, bg]);
+        if (d.visScore.previous !== null && d.visScore.delta !== null) {
+          const upDelta = d.visScore.delta > 0;
+          const triX = txtX + 78;
+          const triY = ty - 7;
+          setColor(doc.setFillColor.bind(doc), upDelta ? C.emerald : C.red);
+          if (upDelta) doc.triangle(triX, triY + 6, triX + 5, triY, triX + 10, triY + 6, "F");
+          else doc.triangle(triX, triY, triX + 5, triY + 6, triX + 10, triY, "F");
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9.5);
+          setColor(doc.setTextColor.bind(doc), upDelta ? C.emerald : C.red);
+          doc.text(
+            `${upDelta ? "+" : ""}${d.visScore.delta} vs. anterior (${d.visScore.previous}/100)`,
+            triX + 15,
+            ty
+          );
+        }
+        ty += 16;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        setColor(doc.setTextColor.bind(doc), C.body);
+        noteLines.forEach((line) => {
+          doc.text(line, txtX, ty);
+          ty += 12;
+        });
+
+        y += cardH + 22;
+      } else {
+        ensureSpace(50);
+        setColor(doc.setFillColor.bind(doc), C.bgSoft);
+        doc.roundedRect(marginX, y, contentWidth, 40, 8, 8, "F");
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        setColor(doc.setTextColor.bind(doc), C.muted);
+        doc.text("VIS Score pendiente — falta completar las 15 preguntas internas.", marginX + 16, y + 24);
+        y += 40 + 22;
       }
-      bodyText(d.visScore.statusNote);
-    } else {
-      bodyText("Pendiente — falta completar las 15 preguntas internas.");
     }
 
-    // Acción recomendada
-    sectionTitle("Acción recomendada #1");
-    bodyText(d.accionRecomendada.titulo, { bold: true });
-    bodyText(d.accionRecomendada.motivo, { gap: 10 });
-
-    // Métricas
-    sectionTitle("Métricas");
-    d.metrics.forEach((m) => {
-      bodyText(`${m.label}: ${m.value}${m.suffix ?? ""}  (antes: ${m.previous}, cambio: ${m.delta})`);
-    });
-    y += 6;
-
-    // Pérdidas
-    if (d.perdidas.length > 0) {
-      sectionTitle("Pérdidas Invisibles");
-      d.perdidas.forEach((p) => bodyText(`[${p.impacto}] ${p.titulo}: ${p.descripcion}`, { gap: 6 }));
+    // ---------- Acción recomendada ----------
+    if (d.accionRecomendada.titulo) {
+      const motivoLines = wrapped(d.accionRecomendada.motivo, 9.5);
+      const tituloLines = wrapped(d.accionRecomendada.titulo, 11, "bold");
+      const cardH = 28 + tituloLines.length * 14 + motivoLines.length * 12 + 10;
+      ensureSpace(cardH + 14);
+      setColor(doc.setFillColor.bind(doc), C.amberBg);
+      doc.roundedRect(marginX, y, contentWidth, cardH, 8, 8, "F");
+      setColor(doc.setFillColor.bind(doc), C.amber);
+      doc.roundedRect(marginX, y, 5, cardH, 2.5, 2.5, "F");
+      let ty = y + 20;
+      setColor(doc.setFillColor.bind(doc), C.amber);
+      doc.circle(marginX + 24, ty - 3, 3, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      setColor(doc.setTextColor.bind(doc), C.amber);
+      doc.text("ACCIÓN PRIORITARIA #1", marginX + 32, ty);
+      ty += 16;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      setColor(doc.setTextColor.bind(doc), C.ink);
+      tituloLines.forEach((line) => {
+        doc.text(line, marginX + 20, ty);
+        ty += 14;
+      });
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      setColor(doc.setTextColor.bind(doc), C.body);
+      motivoLines.forEach((line) => {
+        doc.text(line, marginX + 20, ty);
+        ty += 12;
+      });
+      y += cardH + 26;
     }
 
-    // Oportunidades
-    if (d.oportunidades.length > 0) {
-      sectionTitle("Oportunidades de Valor Oculto");
-      d.oportunidades.forEach((o) =>
-        bodyText(`[${o.potencial}] ${o.titulo}: ${o.descripcion}`, { gap: 6 })
-      );
+    // ---------- Métricas (2 columnas, filas dinámicas) ----------
+    if (d.metrics.length > 0) {
+      sectionLabel("Métricas");
+      const colW = (contentWidth - 12) / 2;
+      const cardH = 54;
+      for (let i = 0; i < d.metrics.length; i += 2) {
+        ensureSpace(cardH + 12);
+        const rowMetrics = d.metrics.slice(i, i + 2);
+        rowMetrics.forEach((m, idx) => {
+          const cx = marginX + idx * (colW + 12);
+          setColor(doc.setFillColor.bind(doc), C.bgSoft);
+          doc.roundedRect(cx, y, colW, cardH, 8, 8, "F");
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8.5);
+          setColor(doc.setTextColor.bind(doc), C.muted);
+          doc.text(m.label, cx + 14, y + 18);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(16);
+          setColor(doc.setTextColor.bind(doc), C.ink);
+          doc.text(`${m.value}${m.suffix ?? ""}`, cx + 14, y + 38);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          setColor(doc.setTextColor.bind(doc), C.emerald);
+          doc.text(`${m.delta}  (antes: ${m.previous})`, cx + 14, y + 48);
+        });
+        y += cardH + 12;
+      }
+      y += 12;
     }
 
-    // Plan de acción
+    // ---------- Tarjetas de lista (pérdidas / oportunidades) ----------
+    function listCard(
+      title: string,
+      items: { titulo: string; descripcion: string; tag: string }[],
+      accent: [number, number, number],
+      tagColors: (tag: string) => [[number, number, number], [number, number, number]]
+    ) {
+      if (items.length === 0) return;
+      sectionLabel(title);
+      items.forEach((item) => {
+        const colors = tagColors(item.tag);
+        const tituloLines = wrapped(item.titulo, 9.5, "bold");
+        const descLines = wrapped(item.descripcion, 9);
+        const cardH = 30 + tituloLines.length * 12 + descLines.length * 11.5;
+        ensureSpace(cardH + 12);
+        setColor(doc.setFillColor.bind(doc), C.white);
+        setColor(doc.setDrawColor.bind(doc), C.line);
+        doc.setLineWidth(0.75);
+        doc.roundedRect(marginX, y, contentWidth, cardH, 8, 8, "FD");
+        setColor(doc.setFillColor.bind(doc), accent);
+        doc.roundedRect(marginX, y, 4, cardH, 2, 2, "F");
+
+        let ty = y + 16;
+        const pw = pill(item.tag, marginX + 18, ty - 10, colors);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        setColor(doc.setTextColor.bind(doc), C.ink);
+        doc.text(tituloLines[0], marginX + 18 + pw + 8, ty);
+        ty += 14;
+        for (let i = 1; i < tituloLines.length; i++) {
+          doc.text(tituloLines[i], marginX + 18, ty);
+          ty += 12;
+        }
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        setColor(doc.setTextColor.bind(doc), C.body);
+        descLines.forEach((line) => {
+          doc.text(line, marginX + 18, ty);
+          ty += 11.5;
+        });
+
+        y += cardH + 10;
+      });
+      y += 12;
+    }
+
+    listCard(
+      "Pérdidas Invisibles",
+      d.perdidas.map((p) => ({ titulo: p.titulo, descripcion: p.descripcion, tag: p.impacto })),
+      C.red,
+      priorityColors
+    );
+    listCard(
+      "Oportunidades de Valor Oculto",
+      d.oportunidades.map((o) => ({ titulo: o.titulo, descripcion: o.descripcion, tag: o.potencial })),
+      C.emerald,
+      potencialColors
+    );
+
+    // ---------- Plan de acción ----------
     if (d.acciones.length > 0) {
-      sectionTitle("Plan de Acción");
+      sectionLabel("Plan de Acción");
       d.acciones.forEach((a, i) => {
-        bodyText(`${i + 1}. [${a.prioridad}] ${a.texto}`, { bold: true, gap: 2 });
-        if (a.problema) bodyText(`Problema: ${a.problema}`);
-        if (a.evidencia) bodyText(`Evidencia: ${a.evidencia}`);
-        if (a.causaProbable) bodyText(`Causa probable: ${a.causaProbable}`);
-        if (a.detalle) bodyText(`Impacto: ${a.detalle}`);
-        if (a.metrica) bodyText(`Métrica de éxito: ${a.metrica}`, { gap: 10 });
+        const colors = priorityColors(a.prioridad);
+        const tituloLines = wrapped(a.texto, 10, "bold");
+        const fields: [string, string][] = [
+          ["Problema", a.problema],
+          ["Evidencia", a.evidencia],
+          ["Causa probable", a.causaProbable],
+          ["Impacto", a.detalle],
+          ["Métrica de éxito", a.metrica],
+        ].filter((f): f is [string, string] => Boolean(f[1]));
+
+        let fieldsHeight = 0;
+        const fieldLines = fields.map(([label, val]) => {
+          const lines = wrapped(`${label}: ${val}`, 8.8);
+          fieldsHeight += lines.length * 11.5 + 2;
+          return lines;
+        });
+        const cardH = 34 + tituloLines.length * 13 + fieldsHeight + 8;
+        ensureSpace(cardH + 14);
+
+        setColor(doc.setFillColor.bind(doc), C.white);
+        setColor(doc.setDrawColor.bind(doc), C.line);
+        doc.setLineWidth(0.75);
+        doc.roundedRect(marginX, y, contentWidth, cardH, 8, 8, "FD");
+        setColor(doc.setFillColor.bind(doc), colors[0]);
+        doc.roundedRect(marginX, y, 4, cardH, 2, 2, "F");
+
+        let ty = y + 18;
+        setColor(doc.setFillColor.bind(doc), colors[0]);
+        doc.circle(marginX + 26, ty - 4, 9, "F");
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        setColor(doc.setTextColor.bind(doc), C.white);
+        doc.text(String(i + 1), marginX + 26, ty - 3.5, { align: "center", baseline: "middle" });
+        const pw = pill(a.prioridad, marginX + 42, ty - 10, colors);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        setColor(doc.setTextColor.bind(doc), C.ink);
+        doc.text(tituloLines[0], marginX + 42 + pw + 8, ty);
+        ty += 13;
+        for (let k = 1; k < tituloLines.length; k++) {
+          doc.text(tituloLines[k], marginX + 42, ty);
+          ty += 13;
+        }
+        ty += 4;
+
+        fieldLines.forEach((lines, idx) => {
+          const label = fields[idx][0];
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(8.8);
+          setColor(doc.setTextColor.bind(doc), C.muted);
+          const labelPrefix = `${label}: `;
+          doc.text(labelPrefix, marginX + 18, ty);
+          const labelW = doc.getTextWidth(labelPrefix);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8.8);
+          setColor(doc.setTextColor.bind(doc), C.body);
+          const valLines = doc.splitTextToSize(fields[idx][1], contentWidth - 36 - labelW) as string[];
+          doc.text(valLines[0], marginX + 18 + labelW, ty);
+          ty += 11.5;
+          for (let k = 1; k < valLines.length; k++) {
+            doc.text(valLines[k], marginX + 18, ty);
+            ty += 11.5;
+          }
+        });
+
+        y += cardH + 12;
       });
     }
 
-    ensureSpace(30);
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8);
-    doc.setTextColor(148, 163, 184);
-    doc.text(
-      "Este es un resumen del análisis. Para el detalle completo entra a tu panel VIS IA en línea.",
-      marginX,
-      y
-    );
-
+    drawFooter();
     doc.save(`VIS-IA-reporte-${d.business.visId}.pdf`);
   }
 
