@@ -5,19 +5,65 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/adminQueries";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+// Palabras que no cuentan como "significativas" al sacar las iniciales
+// del negocio (artículos, preposiciones cortas en español e inglés).
+const STOPWORDS = new Set([
+  "de", "del", "la", "el", "los", "las", "y", "en", "a", "con", "para",
+  "by", "of", "the", "and", "at", "on",
+]);
+
 /**
- * Genera un client_code único con el formato VIS-YYMMDD (mismo patrón
- * que los clientes ya existentes). Si dos negocios se dan de alta el
- * mismo día, le agrega una letra (VIS-260920A, VIS-260920B, ...).
+ * Iniciales del negocio para el client_code — hasta 3 letras, tomadas
+ * de las primeras palabras significativas del nombre (se ignoran
+ * artículos/preposiciones cortas). Ej: "Café Central Marietta" -> CCM,
+ * "Days Inn by Wyndham..." -> DIW (se salta "by"). Si el nombre no
+ * tiene suficientes palabras, se completa con letras siguientes de la
+ * última palabra usada, para siempre llegar a 3 caracteres.
+ */
+function businessInitials(businessName: string): string {
+  const words = businessName
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // quita acentos (Café -> Cafe)
+    .toUpperCase()
+    .split(/\s+/)
+    .filter((w) => /[A-Z0-9]/.test(w));
+
+  const significant = words.filter((w) => !STOPWORDS.has(w.toLowerCase()));
+  const pool = significant.length > 0 ? significant : words;
+
+  let letters = pool
+    .slice(0, 3)
+    .map((w) => w[0])
+    .join("");
+
+  if (letters.length < 3) {
+    const filler = pool[pool.length - 1] ?? "X";
+    for (const ch of filler.slice(1)) {
+      if (letters.length >= 3) break;
+      letters += ch;
+    }
+  }
+
+  letters = letters.replace(/[^A-Z0-9]/g, "");
+  return (letters || "XXX").padEnd(3, "X").slice(0, 3);
+}
+
+/**
+ * Genera un client_code único con el formato VIS-INICIALES-YYMMDD
+ * (iniciales del negocio + fecha del día en que se da de alta). Si dos
+ * negocios con las mismas iniciales se dan de alta el mismo día, le
+ * agrega una letra (VIS-DIW-260920A, VIS-DIW-260920B, ...).
  */
 async function generateClientCode(
-  supabaseAdmin: ReturnType<typeof createAdminClient>
+  supabaseAdmin: ReturnType<typeof createAdminClient>,
+  businessName: string
 ): Promise<string> {
   const now = new Date();
   const yy = String(now.getFullYear()).slice(2);
   const mm = String(now.getMonth() + 1).padStart(2, "0");
   const dd = String(now.getDate()).padStart(2, "0");
-  const base = `VIS-${yy}${mm}${dd}`;
+  const initials = businessInitials(businessName);
+  const base = `VIS-${initials}-${yy}${mm}${dd}`;
 
   let code = base;
   let suffixIndex = 0;
@@ -89,7 +135,7 @@ export async function createClient(formData: FormData) {
     };
   }
 
-  const clientCode = await generateClientCode(supabaseAdmin);
+  const clientCode = await generateClientCode(supabaseAdmin, businessName);
 
   const { data: newClient, error: insertError } = await supabaseAdmin
     .from("clients")
