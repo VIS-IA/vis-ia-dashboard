@@ -20,6 +20,7 @@ import {
   TrendingUp,
   MessageCircle,
   GitCompare,
+  Globe,
   ChevronDown,
   Lock,
   ArrowRight,
@@ -72,7 +73,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     tier: "pro",
     label: "Pro",
-    items: [{ icon: GitCompare, label: "Comparación Completa", href: "/panel/comparacion" }],
+    items: [
+      { icon: GitCompare, label: "Comparación Completa", href: "/panel/comparacion" },
+      { icon: Globe, label: "Presencia Web", href: "/panel/presencia-web" },
+    ],
   },
   {
     tier: "intelligence",

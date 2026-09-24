@@ -13,6 +13,7 @@ import type {
   EvidenceRecord,
   TrendPoint,
   TrendInsight,
+  WebsiteDetail,
 } from "@/lib/types";
 
 function dayInMonth(year: number, month: number, day: number): Date {
@@ -492,6 +493,56 @@ export async function getCompetitors(): Promise<Competitor[]> {
     }));
   } catch {
     return [];
+  }
+}
+
+/**
+ * Presencia Web — análisis de la página web propia del negocio, para
+ * la página "Presencia Web" (Pro+). Distinto de Reputación/Experiencia:
+ * esto no son reseñas de terceros, es lo que el negocio publica por su
+ * cuenta (su sitio) y qué tan bien lo está usando.
+ */
+export async function getWebsiteDetail(): Promise<WebsiteDetail | null> {
+  try {
+    const context = await getReportContext();
+    if (!context) return null;
+
+    const supabase = createClient();
+    const [{ data: analysis }, { data: findings }] = await Promise.all([
+      supabase
+        .from("website_analysis")
+        .select("*")
+        .eq("report_id", context.latestReportId)
+        .maybeSingle(),
+      supabase
+        .from("website_findings")
+        .select("*")
+        .eq("report_id", context.latestReportId)
+        .order("sort_order", { ascending: true }),
+    ]);
+
+    if (!analysis) return null;
+
+    return {
+      analysis: {
+        hasWebsite: analysis.has_website,
+        websiteUrl: analysis.website_url,
+        lastContentUpdateLabel: analysis.last_content_update_label,
+        mobileFriendly: analysis.mobile_friendly,
+        contactInfoConsistent: analysis.contact_info_consistent,
+        hasOnlineBooking: analysis.has_online_booking,
+        overallAssessment: analysis.overall_assessment,
+      },
+      findings: (findings ?? []).map((f) => ({
+        titulo: f.titulo,
+        descripcion: f.descripcion,
+        impacto: f.impacto,
+        categoria: f.categoria,
+        evidencia: f.evidencia ?? null,
+      })),
+    };
+  } catch {
+    return null;
   }
 }
 

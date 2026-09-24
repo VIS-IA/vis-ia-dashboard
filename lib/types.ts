@@ -211,6 +211,35 @@ export interface Competitor {
   isYou: boolean;
 }
 
+/**
+ * Presencia Web — análisis de la página web propia del negocio (no
+ * reseñas ni redes sociales, eso ya vive en Reputación/Experiencia).
+ * Un resumen general por reporte + una lista de hallazgos específicos,
+ * mismo patrón que Pérdida Invisible / Valor Oculto.
+ */
+export interface WebsiteAnalysis {
+  hasWebsite: boolean;
+  websiteUrl: string | null;
+  lastContentUpdateLabel: string | null;
+  mobileFriendly: boolean | null;
+  contactInfoConsistent: boolean | null;
+  hasOnlineBooking: boolean | null;
+  overallAssessment: string;
+}
+
+export interface WebsiteFinding {
+  titulo: string;
+  descripcion: string;
+  impacto: "Alto" | "Media" | "Baja";
+  categoria: string;
+  evidencia: string | null;
+}
+
+export interface WebsiteDetail {
+  analysis: WebsiteAnalysis;
+  findings: WebsiteFinding[];
+}
+
 export interface OtherReputation {
   platform: string;
   rating: number;
