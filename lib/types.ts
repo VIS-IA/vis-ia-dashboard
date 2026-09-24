@@ -240,6 +240,35 @@ export interface WebsiteDetail {
   findings: WebsiteFinding[];
 }
 
+/**
+ * Redes Sociales — presencia propia del negocio en Instagram/Facebook
+ * (no reseñas, eso vive en Reputación). Un perfil por plataforma
+ * encontrada + hallazgos específicos, mismo patrón que Presencia Web.
+ */
+export interface SocialProfile {
+  platform: string;
+  handle: string | null;
+  profileUrl: string | null;
+  followers: number | null;
+  lastPostLabel: string | null;
+  postingFrequencyLabel: string | null;
+  respondsToComments: boolean | null;
+}
+
+export interface SocialFinding {
+  titulo: string;
+  descripcion: string;
+  impacto: "Alto" | "Media" | "Baja";
+  categoria: string;
+  evidencia: string | null;
+}
+
+export interface SocialMediaDetail {
+  overallAssessment: string;
+  profiles: SocialProfile[];
+  findings: SocialFinding[];
+}
+
 export interface OtherReputation {
   platform: string;
   rating: number;

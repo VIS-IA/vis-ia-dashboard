@@ -48,6 +48,7 @@ const PLAN_CONTENT: Record<PlanTier, PlanContent> = {
       { label: "Todo lo incluido en el plan Diagnostic" },
       { label: "Comparación Completa — tu negocio antes vs. ahora, reporte a reporte", href: "/panel/comparacion" },
       { label: "Presencia Web — análisis de tu propia página web", href: "/panel/presencia-web" },
+      { label: "Redes Sociales — qué tan presente y activo estás en Instagram y Facebook", href: "/panel/redes-sociales" },
       { label: "Evolución del VIS Score en el tiempo (gráfico histórico)", href: "/panel/vis-score" },
       { label: "1 mes gratis del Asistente VIS (IA) al activarlo por primera vez" },
       { label: "Análisis mensual garantizado — tu negocio se re-analiza todos los meses" },

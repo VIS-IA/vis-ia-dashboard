@@ -21,6 +21,7 @@ import {
   MessageCircle,
   GitCompare,
   Globe,
+  Share2,
   ChevronDown,
   Lock,
   ArrowRight,
@@ -76,6 +77,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { icon: GitCompare, label: "Comparación Completa", href: "/panel/comparacion" },
       { icon: Globe, label: "Presencia Web", href: "/panel/presencia-web" },
+      { icon: Share2, label: "Redes Sociales", href: "/panel/redes-sociales" },
     ],
   },
   {

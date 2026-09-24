@@ -14,6 +14,7 @@ import type {
   TrendPoint,
   TrendInsight,
   WebsiteDetail,
+  SocialMediaDetail,
 } from "@/lib/types";
 
 function dayInMonth(year: number, month: number, day: number): Date {
@@ -533,6 +534,62 @@ export async function getWebsiteDetail(): Promise<WebsiteDetail | null> {
         hasOnlineBooking: analysis.has_online_booking,
         overallAssessment: analysis.overall_assessment,
       },
+      findings: (findings ?? []).map((f) => ({
+        titulo: f.titulo,
+        descripcion: f.descripcion,
+        impacto: f.impacto,
+        categoria: f.categoria,
+        evidencia: f.evidencia ?? null,
+      })),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Redes Sociales — presencia propia del negocio en Instagram/Facebook,
+ * para la página "Redes Sociales" (Pro+). Un perfil por plataforma
+ * encontrada (puede no haber ninguna — eso también es un hallazgo) +
+ * una lista de hallazgos específicos.
+ */
+export async function getSocialMediaDetail(): Promise<SocialMediaDetail | null> {
+  try {
+    const context = await getReportContext();
+    if (!context) return null;
+
+    const supabase = createClient();
+    const [{ data: analysis }, { data: profiles }, { data: findings }] = await Promise.all([
+      supabase
+        .from("social_media_analysis")
+        .select("*")
+        .eq("report_id", context.latestReportId)
+        .maybeSingle(),
+      supabase
+        .from("social_profiles")
+        .select("*")
+        .eq("report_id", context.latestReportId)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("social_findings")
+        .select("*")
+        .eq("report_id", context.latestReportId)
+        .order("sort_order", { ascending: true }),
+    ]);
+
+    if (!analysis) return null;
+
+    return {
+      overallAssessment: analysis.overall_assessment,
+      profiles: (profiles ?? []).map((p) => ({
+        platform: p.platform,
+        handle: p.handle,
+        profileUrl: p.profile_url,
+        followers: p.followers,
+        lastPostLabel: p.last_post_label,
+        postingFrequencyLabel: p.posting_frequency_label,
+        respondsToComments: p.responds_to_comments,
+      })),
       findings: (findings ?? []).map((f) => ({
         titulo: f.titulo,
         descripcion: f.descripcion,
