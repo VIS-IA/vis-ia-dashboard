@@ -129,3 +129,9 @@ from new_record, (values
   ('Servicio', 'critical'),
   ('Ruido', 'high')
 ) as t(category, severity);
+
+-- 9) Notificación (DEMO) — una campanita sin nada nuevo se ve "muerta"
+--    en una demo en vivo; se agrega una notificación sin leer avisando
+--    del reporte más reciente.
+insert into notifications (client_id, title, message, read, created_at) values
+('a2cf8e02-445a-47f9-9e5a-b5cfcad9aa80','Tu nuevo reporte ya está disponible','Tu VIS Score subió a 55/100 (+7 desde tu primera medición). Revisa qué cambió en tu panel.', false, '2026-09-18 09:00:00+00');
