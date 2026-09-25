@@ -261,12 +261,54 @@ export interface SocialFinding {
   impacto: "Alto" | "Media" | "Baja";
   categoria: string;
   evidencia: string | null;
+  accionRecomendada: string | null;
+  porQue: string | null;
 }
 
 export interface SocialMediaDetail {
   overallAssessment: string;
   profiles: SocialProfile[];
   findings: SocialFinding[];
+}
+
+/**
+ * Noticias y Menciones — qué se encuentra del negocio fuera de sus
+ * propios canales (medios, blogs, directorios). La ausencia de
+ * menciones también es un hallazgo válido (negocio local sin cobertura
+ * de prensa), no se fuerza a encontrar algo si no existe.
+ */
+export interface NewsMention {
+  titulo: string;
+  fuente: string;
+  url: string | null;
+  fechaLabel: string | null;
+  resumen: string;
+  tono: "Positivo" | "Neutral" | "Negativo";
+}
+
+export interface NewsMentionsDetail {
+  overallAssessment: string;
+  mentions: NewsMention[];
+}
+
+/**
+ * Evolución del Sitio Web — comparación histórica (Wayback Machine) +
+ * lectura de tráfico/comportamiento de visitantes cuando hay datos
+ * públicos disponibles (SimilarWeb/SEMrush, gratis, sin API). Cuando
+ * una propiedad es parte de una franquicia sin dominio propio, el
+ * tráfico suele reflejar la marca completa, no el negocio puntual —
+ * eso se declara explícitamente en traficoAlcanceNota en vez de
+ * presentarlo como si fuera específico del cliente.
+ */
+export interface WebsiteEvolution {
+  resumenEvolucion: string;
+  tendencia: "Mejorando" | "Empeorando" | "Estable" | "Sin datos suficientes";
+  traficoEstimadoLabel: string | null;
+  traficoFuente: string | null;
+  traficoAlcanceNota: string | null;
+  comportamientoVisitantes: string | null;
+  accionRecomendada: string | null;
+  porQue: string | null;
 }
 
 export interface OtherReputation {

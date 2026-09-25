@@ -49,6 +49,8 @@ const PLAN_CONTENT: Record<PlanTier, PlanContent> = {
       { label: "Comparación Completa — tu negocio antes vs. ahora, reporte a reporte", href: "/panel/comparacion" },
       { label: "Presencia Web — análisis de tu propia página web", href: "/panel/presencia-web" },
       { label: "Redes Sociales — qué tan presente y activo estás en Instagram y Facebook", href: "/panel/redes-sociales" },
+      { label: "Noticias y Menciones — qué se dice de ti fuera de tus propios canales", href: "/panel/noticias" },
+      { label: "Evolución del Sitio Web — antes vs. ahora y tráfico de visitantes", href: "/panel/evolucion-web" },
       { label: "Evolución del VIS Score en el tiempo (gráfico histórico)", href: "/panel/vis-score" },
       { label: "1 mes gratis del Asistente VIS (IA) al activarlo por primera vez" },
       { label: "Análisis mensual garantizado — tu negocio se re-analiza todos los meses" },

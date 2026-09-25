@@ -15,6 +15,8 @@ import type {
   TrendInsight,
   WebsiteDetail,
   SocialMediaDetail,
+  NewsMentionsDetail,
+  WebsiteEvolution,
 } from "@/lib/types";
 
 function dayInMonth(year: number, month: number, day: number): Date {
@@ -596,7 +598,85 @@ export async function getSocialMediaDetail(): Promise<SocialMediaDetail | null> 
         impacto: f.impacto,
         categoria: f.categoria,
         evidencia: f.evidencia ?? null,
+        accionRecomendada: f.accion_recomendada ?? null,
+        porQue: f.por_que ?? null,
       })),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Noticias y Menciones — qué encuentra VIS IA del negocio en medios,
+ * blogs y directorios fuera de sus propios canales. Puede devolver una
+ * lista vacía (negocio sin cobertura de prensa) — eso se muestra en la
+ * página como un hallazgo honesto, no como error.
+ */
+export async function getNewsMentionsDetail(): Promise<NewsMentionsDetail | null> {
+  try {
+    const context = await getReportContext();
+    if (!context) return null;
+
+    const supabase = createClient();
+    const [{ data: analysis }, { data: mentions }] = await Promise.all([
+      supabase
+        .from("news_mentions_analysis")
+        .select("*")
+        .eq("report_id", context.latestReportId)
+        .maybeSingle(),
+      supabase
+        .from("news_mentions")
+        .select("*")
+        .eq("report_id", context.latestReportId)
+        .order("sort_order", { ascending: true }),
+    ]);
+
+    if (!analysis) return null;
+
+    return {
+      overallAssessment: analysis.overall_assessment,
+      mentions: (mentions ?? []).map((m) => ({
+        titulo: m.titulo,
+        fuente: m.fuente,
+        url: m.url ?? null,
+        fechaLabel: m.fecha_label ?? null,
+        resumen: m.resumen,
+        tono: m.tono,
+      })),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Evolución del Sitio Web — antes vs. ahora (Wayback Machine) + lectura
+ * de tráfico/comportamiento cuando hay datos públicos disponibles.
+ */
+export async function getWebsiteEvolution(): Promise<WebsiteEvolution | null> {
+  try {
+    const context = await getReportContext();
+    if (!context) return null;
+
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("website_evolution_analysis")
+      .select("*")
+      .eq("report_id", context.latestReportId)
+      .maybeSingle();
+
+    if (!data) return null;
+
+    return {
+      resumenEvolucion: data.resumen_evolucion,
+      tendencia: data.tendencia,
+      traficoEstimadoLabel: data.trafico_estimado_label ?? null,
+      traficoFuente: data.trafico_fuente ?? null,
+      traficoAlcanceNota: data.trafico_alcance_nota ?? null,
+      comportamientoVisitantes: data.comportamiento_visitantes ?? null,
+      accionRecomendada: data.accion_recomendada ?? null,
+      porQue: data.por_que ?? null,
     };
   } catch {
     return null;

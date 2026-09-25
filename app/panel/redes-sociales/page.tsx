@@ -119,15 +119,31 @@ function FindingCard({ finding }: { finding: SocialFinding }) {
           <ImpactPill level={finding.impacto} />
         </div>
       </div>
-      {finding.evidencia && (
-        <div className="px-5 pb-5 pt-1 border-t border-slate-100">
-          <div className="flex gap-2.5 pt-4">
-            <AlertCircle size={14} className="text-slate-400 mt-0.5 shrink-0" />
-            <p className="text-sm text-slate-600">
-              <span className="font-medium text-slate-700">Evidencia: </span>
-              {finding.evidencia}
-            </p>
-          </div>
+      {(finding.evidencia || finding.accionRecomendada) && (
+        <div className="px-5 pb-5 pt-1 border-t border-slate-100 space-y-3">
+          {finding.evidencia && (
+            <div className="flex gap-2.5 pt-4">
+              <AlertCircle size={14} className="text-slate-400 mt-0.5 shrink-0" />
+              <p className="text-sm text-slate-600">
+                <span className="font-medium text-slate-700">Evidencia: </span>
+                {finding.evidencia}
+              </p>
+            </div>
+          )}
+          {finding.accionRecomendada && (
+            <div className="bg-purple-50 rounded-lg p-3.5 space-y-1.5">
+              <p className="text-sm text-purple-900">
+                <span className="font-semibold">Qué hacer: </span>
+                {finding.accionRecomendada}
+              </p>
+              {finding.porQue && (
+                <p className="text-sm text-purple-800/80">
+                  <span className="font-semibold">Por qué: </span>
+                  {finding.porQue}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -154,6 +170,8 @@ const SAMPLE_FINDINGS: SocialFinding[] = [
     impacto: "Alto",
     categoria: "Presencia",
     evidencia: null,
+    accionRecomendada: "Crear una cuenta propia y publicar contenido real del negocio cada semana.",
+    porQue: "Los clientes deciden con fotos recientes, no con las genéricas de la marca.",
   },
 ];
 

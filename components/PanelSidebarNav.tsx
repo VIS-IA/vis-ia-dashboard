@@ -25,6 +25,8 @@ import {
   ChevronDown,
   Lock,
   ArrowRight,
+  Newspaper,
+  History,
   type LucideIcon,
 } from "lucide-react";
 import { planAtLeast, type PlanTier } from "@/lib/plan";
@@ -78,6 +80,8 @@ const NAV_GROUPS: NavGroup[] = [
       { icon: GitCompare, label: "Comparación Completa", href: "/panel/comparacion" },
       { icon: Globe, label: "Presencia Web", href: "/panel/presencia-web" },
       { icon: Share2, label: "Redes Sociales", href: "/panel/redes-sociales" },
+      { icon: Newspaper, label: "Noticias y Menciones", href: "/panel/noticias" },
+      { icon: History, label: "Evolución del Sitio Web", href: "/panel/evolucion-web" },
     ],
   },
   {
