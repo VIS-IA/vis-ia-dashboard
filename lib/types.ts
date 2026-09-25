@@ -70,6 +70,7 @@ export interface EvidenceRecordPhoto {
 }
 
 export interface EvidenceRecord {
+  id: string;
   source: string;
   sourceUrl: string;
   author: string | null;
@@ -86,6 +87,9 @@ export interface EvidenceRecord {
   requiresHumanReview: boolean;
   issues: EvidenceRecordIssue[];
   photos: EvidenceRecordPhoto[];
+  /** Borrador de respuesta generado por IA — el cliente lo copia/edita, nunca se publica solo. */
+  suggestedResponse: string | null;
+  suggestedResponseGeneratedAt: string | null;
 }
 
 export interface DashboardLoss {

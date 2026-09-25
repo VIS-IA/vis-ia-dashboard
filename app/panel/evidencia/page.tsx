@@ -1,5 +1,7 @@
-import { getVisualEvidence, getEvidenceRecords } from "@/lib/queries";
+import { getVisualEvidence, getEvidenceRecords, getClientPlan } from "@/lib/queries";
+import { planAtLeast } from "@/lib/plan";
 import PanelLayout from "@/components/PanelLayout";
+import ResponseDraftBox from "@/components/ResponseDraftBox";
 import {
   Camera,
   Video,
@@ -46,10 +48,12 @@ function CertaintyPill({ level }: { level: CertaintyLevel }) {
 }
 
 export default async function EvidenciaPage() {
-  const [evidence, records] = await Promise.all([
+  const [evidence, records, plan] = await Promise.all([
     getVisualEvidence(),
     getEvidenceRecords(),
+    getClientPlan(),
   ]);
+  const canGenerateResponses = planAtLeast(plan, "pro");
 
   const isEmpty = evidence.length === 0 && records.length === 0;
 
@@ -159,6 +163,17 @@ export default async function EvidenciaPage() {
                     </p>
                   </div>
                 )}
+              </div>
+
+              <div className="p-5 border-b border-slate-100">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                  Responder a esta reseña
+                </p>
+                <ResponseDraftBox
+                  evidenceRecordId={r.id}
+                  initialDraft={r.suggestedResponse}
+                  canGenerate={canGenerateResponses}
+                />
               </div>
 
               {r.photos.length > 0 && (

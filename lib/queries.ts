@@ -901,6 +901,7 @@ export async function getEvidenceRecords(): Promise<EvidenceRecord[]> {
     ]);
 
     return records.map((r) => ({
+      id: r.id,
       source: r.source,
       sourceUrl: r.source_url,
       author: r.author,
@@ -928,6 +929,8 @@ export async function getEvidenceRecords(): Promise<EvidenceRecord[]> {
           impact: p.impact,
           analysis: p.analysis,
         })),
+      suggestedResponse: r.suggested_response ?? null,
+      suggestedResponseGeneratedAt: r.suggested_response_generated_at ?? null,
     }));
   } catch {
     return [];
