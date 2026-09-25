@@ -142,6 +142,13 @@ export interface ReputationDetail {
   avgResponseTimeDays: number | null;
   /** true cuando la tasa de respuesta cayó fuerte o llegó a 0 frente al reporte anterior */
   responseManagementSignal: boolean;
+  /**
+   * Explicación específica de por qué las reseñas/fotos de Google Maps
+   * pesan tanto para ESTE tipo de negocio en particular (no un texto
+   * genérico) — ayuda al cliente a entender la magnitud real, no solo
+   * el número.
+   */
+  impactoExplicado: string | null;
 }
 
 /**

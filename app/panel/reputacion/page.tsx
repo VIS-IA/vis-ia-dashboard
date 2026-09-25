@@ -69,6 +69,18 @@ export default async function ReputacionPage() {
       subtitle="Google es tu reputación principal — otras plataformas se muestran como contexto"
     >
       <div className="max-w-3xl space-y-6">
+        {detail.impactoExplicado && (
+          <div className="bg-amber-50 border border-amber-100 rounded-xl p-5 flex gap-3">
+            <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-1">
+                Por qué esto te afecta tanto
+              </p>
+              <p className="text-sm text-amber-900">{detail.impactoExplicado}</p>
+            </div>
+          </div>
+        )}
+
         {/* Reputación principal — Google */}
         <div>
           <div className="flex items-center gap-2 mb-3">

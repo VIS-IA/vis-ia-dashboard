@@ -415,6 +415,7 @@ export async function getReputationDetail(): Promise<ReputationDetail | null> {
       reviewsUnresponded: data.reviews_unresponded,
       avgResponseTimeDays: data.avg_response_time_days,
       responseManagementSignal,
+      impactoExplicado: data.impacto_explicado ?? null,
     };
   } catch {
     return null;
