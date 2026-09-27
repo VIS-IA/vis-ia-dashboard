@@ -73,6 +73,21 @@ export default function AdminNewClientForm() {
       </div>
 
       <div className="space-y-1">
+        <label className="text-xs font-medium text-slate-600">Idioma del panel</label>
+        <select
+          name="language"
+          defaultValue="es"
+          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="es">Español</option>
+          <option value="en">English</option>
+        </select>
+        <p className="text-[11px] text-slate-400">
+          En qué idioma verá este cliente todo su panel — no se puede cambiar desde el panel del cliente, se fija una vez aquí.
+        </p>
+      </div>
+
+      <div className="space-y-1">
         <label className="text-xs font-medium text-slate-600">Ubicación</label>
         <input
           name="location"

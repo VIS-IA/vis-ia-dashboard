@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { PlanTier } from "@/lib/plan";
+import type { Language } from "@/lib/i18n";
 import type {
   DashboardData,
   DashboardMetric,
@@ -832,6 +833,32 @@ export async function getClientPlan(): Promise<PlanTier> {
     return (client?.plan as PlanTier) ?? "diagnostic";
   } catch {
     return "diagnostic";
+  }
+}
+
+/**
+ * Idioma FIJO del panel de este cliente ("es" | "en") — se define una
+ * sola vez al crearlo en el admin, el cliente no lo puede cambiar desde
+ * su panel. Nunca falla de forma visible: ante cualquier problema
+ * (sin sesión, columna vieja, etc.) se asume "es".
+ */
+export async function getClientLanguage(): Promise<Language> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return "es";
+
+    const { data: client } = await supabase
+      .from("clients")
+      .select("language")
+      .eq("user_id", user.id)
+      .single();
+
+    return (client?.language as Language) ?? "es";
+  } catch {
+    return "es";
   }
 }
 

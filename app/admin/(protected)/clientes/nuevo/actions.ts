@@ -95,6 +95,7 @@ export async function createClient(formData: FormData) {
   const businessType = String(formData.get("businessType") ?? "negocio");
   const location = String(formData.get("location") ?? "").trim();
   const plan = String(formData.get("plan") ?? "diagnostic");
+  const language = String(formData.get("language") ?? "es");
   const contactName = String(formData.get("contactName") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
@@ -112,6 +113,9 @@ export async function createClient(formData: FormData) {
   }
   if (!["diagnostic", "pro", "intelligence"].includes(plan)) {
     return { error: "Plan inválido." };
+  }
+  if (!["es", "en"].includes(language)) {
+    return { error: "Idioma inválido." };
   }
 
   const supabaseAdmin = createAdminClient();
@@ -146,6 +150,7 @@ export async function createClient(formData: FormData) {
       business_type: businessType,
       location,
       plan,
+      language,
       contact_name: contactName || null,
       phone: phone || null,
       address: address || null,

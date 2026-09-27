@@ -30,23 +30,19 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { planAtLeast, type PlanTier } from "@/lib/plan";
+import { getDictionary, type Language } from "@/lib/i18n";
 
 // Número de WhatsApp del negocio, en formato internacional sin signos:
 // +1 678 400 7344 -> 16784007344
 const WHATSAPP_NUMBER = "16784007344";
-const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-  "Hola, necesito ayuda con mi panel VIS IA"
-)}`;
 
 interface NavLeaf {
   icon: LucideIcon;
-  label: string;
   href: string;
 }
 
 interface NavGroup {
   tier: PlanTier;
-  label: string;
   items: NavLeaf[];
 }
 
@@ -55,41 +51,40 @@ interface NavGroup {
 // tiene). Los grupos "Pro" e "Intelligence" se pueden abrir igual aunque
 // el cliente no tenga ese plan — así ve qué incluye cada uno, con
 // candado, y puede entrar a "Ver todo lo que incluye" para el detalle
-// completo y el botón de actualizar.
+// completo y el botón de actualizar. Las etiquetas (label) viven en el
+// diccionario de idioma (lib/i18n.ts), no acá — esto solo define el
+// orden, los íconos y a qué href va cada botón.
 const NAV_GROUPS: NavGroup[] = [
   {
     tier: "diagnostic",
-    label: "Diagnostic",
     items: [
-      { icon: ClipboardList, label: "15 Preguntas", href: "/panel/preguntas" },
-      { icon: BarChart3, label: "VIS Score", href: "/panel/vis-score" },
-      { icon: Star, label: "Pérdida Invisible", href: "/panel/perdidas" },
-      { icon: Sparkles, label: "Valor Oculto", href: "/panel/oportunidades" },
-      { icon: Star, label: "Reputación", href: "/panel/reputacion" },
-      { icon: Users, label: "Experiencia del Cliente", href: "/panel/experiencia" },
-      { icon: BarChart3, label: "Competencia", href: "/panel/competencia" },
-      { icon: Camera, label: "Evidencia Visual", href: "/panel/evidencia" },
-      { icon: CheckSquare, label: "Plan de Acción", href: "/panel/plan-accion" },
-      { icon: FileText, label: "Reportes", href: "/panel/reportes" },
+      { icon: ClipboardList, href: "/panel/preguntas" },
+      { icon: BarChart3, href: "/panel/vis-score" },
+      { icon: Star, href: "/panel/perdidas" },
+      { icon: Sparkles, href: "/panel/oportunidades" },
+      { icon: Star, href: "/panel/reputacion" },
+      { icon: Users, href: "/panel/experiencia" },
+      { icon: BarChart3, href: "/panel/competencia" },
+      { icon: Camera, href: "/panel/evidencia" },
+      { icon: CheckSquare, href: "/panel/plan-accion" },
+      { icon: FileText, href: "/panel/reportes" },
     ],
   },
   {
     tier: "pro",
-    label: "Pro",
     items: [
-      { icon: GitCompare, label: "Comparación Completa", href: "/panel/comparacion" },
-      { icon: Globe, label: "Presencia Web", href: "/panel/presencia-web" },
-      { icon: Share2, label: "Redes Sociales", href: "/panel/redes-sociales" },
-      { icon: Newspaper, label: "Noticias y Menciones", href: "/panel/noticias" },
-      { icon: History, label: "Evolución del Sitio Web", href: "/panel/evolucion-web" },
+      { icon: GitCompare, href: "/panel/comparacion" },
+      { icon: Globe, href: "/panel/presencia-web" },
+      { icon: Share2, href: "/panel/redes-sociales" },
+      { icon: Newspaper, href: "/panel/noticias" },
+      { icon: History, href: "/panel/evolucion-web" },
     ],
   },
   {
     tier: "intelligence",
-    label: "Intelligence",
     items: [
-      { icon: MessageCircle, label: "Asistente IA", href: "/panel/asistente" },
-      { icon: TrendingUp, label: "Análisis de Tendencias", href: "/panel/tendencias" },
+      { icon: MessageCircle, href: "/panel/asistente" },
+      { icon: TrendingUp, href: "/panel/tendencias" },
     ],
   },
 ];
@@ -104,9 +99,15 @@ const NAV_GROUPS: NavGroup[] = [
  * VisIaPanelInicio en la portada) ya lo tiene disponible del lado del
  * servidor y solo lo pasa hacia abajo.
  */
-export default function PanelSidebarNav({ plan }: { plan: PlanTier }) {
+export default function PanelSidebarNav({ plan, language }: { plan: PlanTier; language: Language }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const t = getDictionary(language);
+  const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+    language === "en"
+      ? "Hi, I need help with my VIS IA panel"
+      : "Hola, necesito ayuda con mi panel VIS IA"
+  )}`;
 
   const activeGroupTier = NAV_GROUPS.find((g) =>
     g.items.some((item) => item.href === pathname)
@@ -155,7 +156,7 @@ export default function PanelSidebarNav({ plan }: { plan: PlanTier }) {
                 : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
             }`}
           >
-            <Home size={18} /> Inicio
+            <Home size={18} /> {t.nav.home}
           </Link>
 
           <div className="pt-3 space-y-1">
@@ -171,10 +172,10 @@ export default function PanelSidebarNav({ plan }: { plan: PlanTier }) {
                     className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-300"
                   >
                     <span className="flex items-center gap-2">
-                      {group.label}
+                      {t.nav.groupLabels[group.tier]}
                       {isCurrentTier && (
                         <span className="bg-blue-600 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-full normal-case tracking-normal">
-                          Tu plan
+                          {t.nav.yourPlan}
                         </span>
                       )}
                       {locked && <Lock size={11} className="text-slate-600" />}
@@ -187,7 +188,7 @@ export default function PanelSidebarNav({ plan }: { plan: PlanTier }) {
 
                   {isExpanded && (
                     <div className="space-y-0.5 mb-1">
-                      {group.items.map(({ icon: Icon, label, href }) => {
+                      {group.items.map(({ icon: Icon, href }) => {
                         const active = pathname === href;
                         return (
                           <Link
@@ -201,7 +202,7 @@ export default function PanelSidebarNav({ plan }: { plan: PlanTier }) {
                             }`}
                           >
                             <Icon size={16} className="shrink-0" />
-                            <span className="truncate">{label}</span>
+                            <span className="truncate">{t.nav.items[href] ?? href}</span>
                             {locked && (
                               <Lock size={11} className="ml-auto shrink-0 text-slate-600" />
                             )}
@@ -213,7 +214,7 @@ export default function PanelSidebarNav({ plan }: { plan: PlanTier }) {
                         onClick={() => setOpen(false)}
                         className="w-full flex items-center gap-1.5 pl-6 pr-3 py-2 text-xs text-blue-400 hover:text-blue-300"
                       >
-                        Ver todo lo que incluye {group.label} <ArrowRight size={11} />
+                        {t.nav.seeEverythingIncluded} {t.nav.groupLabels[group.tier]} <ArrowRight size={11} />
                       </Link>
                     </div>
                   )}
@@ -232,7 +233,7 @@ export default function PanelSidebarNav({ plan }: { plan: PlanTier }) {
                   : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
               }`}
             >
-              <UserCircle size={18} /> Mi Cuenta
+              <UserCircle size={18} /> {t.nav.account}
             </Link>
           </div>
         </nav>
@@ -240,16 +241,16 @@ export default function PanelSidebarNav({ plan }: { plan: PlanTier }) {
 
       <div className="p-4 space-y-3">
         <div className="bg-white/5 rounded-xl p-4">
-          <p className="text-sm font-medium text-slate-200">¿Necesitas ayuda?</p>
-          <p className="text-xs text-slate-500 mt-1">Escríbenos por WhatsApp</p>
+          <p className="text-sm font-medium text-slate-200">{t.nav.needHelp}</p>
+          <p className="text-xs text-slate-500 mt-1">{t.nav.writeUsOnWhatsapp}</p>
         </div>
         <a
-          href={WHATSAPP_LINK}
+          href={whatsappLink}
           target="_blank"
           rel="noopener noreferrer"
           className="w-full flex items-center justify-center gap-2 text-sm text-slate-300 border border-white/10 rounded-lg py-2.5 hover:bg-white/5"
         >
-          Soporte VIS IA
+          {t.nav.support}
         </a>
       </div>
     </>

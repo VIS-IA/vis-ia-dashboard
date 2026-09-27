@@ -1,5 +1,5 @@
 import PanelSidebarNav from "@/components/PanelSidebarNav";
-import { getClientPlan } from "@/lib/queries";
+import { getClientPlan, getClientLanguage } from "@/lib/queries";
 
 /**
  * PanelSidebar
@@ -11,8 +11,8 @@ import { getClientPlan } from "@/lib/queries";
  * poder mostrar el menú.
  */
 export async function PanelSidebar() {
-  const plan = await getClientPlan();
-  return <PanelSidebarNav plan={plan} />;
+  const [plan, language] = await Promise.all([getClientPlan(), getClientLanguage()]);
+  return <PanelSidebarNav plan={plan} language={language} />;
 }
 
 /**

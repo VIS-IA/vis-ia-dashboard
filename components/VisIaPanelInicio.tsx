@@ -25,6 +25,7 @@ import EconomicImpactSummary from "@/components/EconomicImpactSummary";
 import { planAtLeast, PLAN_LABELS, type PlanTier } from "@/lib/plan";
 import { getVisStatusPresentation } from "@/lib/visStatus";
 import type { DashboardData } from "@/lib/types";
+import type { Language } from "@/lib/i18n";
 
 /**
  * VisIaPanelInicio
@@ -79,10 +80,12 @@ export default function VisIaPanelInicio({
   data: d,
   onboardingCompleted = false,
   plan = "diagnostic",
+  language = "es",
 }: {
   data: DashboardData;
   onboardingCompleted?: boolean;
   plan?: PlanTier;
+  language?: Language;
 }) {
   const canCompare = planAtLeast(plan, "pro");
   const statusPresentation = getVisStatusPresentation(d.visScore.status);
@@ -589,7 +592,7 @@ export default function VisIaPanelInicio({
   return (
     <div className="min-h-screen w-full bg-slate-50 flex flex-col lg:flex-row text-slate-800">
       {/* Sidebar */}
-      <PanelSidebarNav plan={plan} />
+      <PanelSidebarNav plan={plan} language={language} />
 
       {/* Main content */}
       <main className="flex-1 min-w-0">
