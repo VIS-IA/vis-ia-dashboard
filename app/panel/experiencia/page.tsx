@@ -1,5 +1,6 @@
-import { getExperienceDetail } from "@/lib/queries";
+import { getExperienceDetail, getClientLanguage } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
+import { getDictionary, type Language } from "@/lib/i18n";
 import { Users, ThumbsUp, ThumbsDown, Globe, MessageSquareText } from "lucide-react";
 import type { ExperienceSignal } from "@/lib/types";
 
@@ -24,8 +25,9 @@ function CertaintyPill({ level }: { level: string }) {
   );
 }
 
-function SignalCard({ signal }: { signal: ExperienceSignal }) {
+function SignalCard({ signal, language }: { signal: ExperienceSignal; language: Language }) {
   const isReviews = signal.sourceType === "reviews_text";
+  const t = getDictionary(language).experiencia;
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4">
@@ -37,7 +39,7 @@ function SignalCard({ signal }: { signal: ExperienceSignal }) {
             <Globe size={14} className="text-purple-500 shrink-0" />
           )}
           <p className="text-xs font-medium text-slate-500 truncate">
-            {signal.source} · {isReviews ? "Reseñas analizadas" : "Puntuación de plataforma"}
+            {signal.source} · {isReviews ? t.reviewsAnalyzedLabel : t.platformScoreLabel}
           </p>
         </div>
         {signal.confidence && <CertaintyPill level={signal.confidence} />}
@@ -47,7 +49,7 @@ function SignalCard({ signal }: { signal: ExperienceSignal }) {
         <div className="flex items-center gap-4 mb-2">
           {signal.reviewsAnalyzed !== null && (
             <span className="text-xs text-slate-500">
-              {signal.reviewsAnalyzed} reseñas analizadas
+              {t.reviewsAnalyzedCount(signal.reviewsAnalyzed)}
             </span>
           )}
           {signal.positiveMentions !== null && (
@@ -74,7 +76,7 @@ function SignalCard({ signal }: { signal: ExperienceSignal }) {
 
       {signal.pattern && (
         <p className="text-sm text-slate-700 mb-1">
-          <span className="font-medium">Patrón detectado: </span>
+          <span className="font-medium">{t.detectedPattern} </span>
           {signal.pattern}
         </p>
       )}
@@ -82,28 +84,23 @@ function SignalCard({ signal }: { signal: ExperienceSignal }) {
         <p className="text-xs text-slate-500">{signal.evidence}</p>
       )}
       {signal.analyzedAt && (
-        <p className="text-[11px] text-slate-400 mt-2">
-          Analizado: {signal.analyzedAt}
-        </p>
+        <p className="text-[11px] text-slate-400 mt-2">{t.analyzed(signal.analyzedAt)}</p>
       )}
     </div>
   );
 }
 
 export default async function ExperienciaPage() {
-  const detail = await getExperienceDetail();
+  const [detail, language] = await Promise.all([getExperienceDetail(), getClientLanguage()]);
+  const t = getDictionary(language).experiencia;
 
   if (!detail || detail.signals.length === 0) {
     return (
-      <PanelLayout title="Experiencia del Cliente">
+      <PanelLayout title={t.title}>
         <div className="bg-white rounded-xl border border-slate-200 p-8 max-w-lg text-center">
           <Users className="text-blue-400 mx-auto mb-3" size={28} />
-          <p className="text-sm font-medium text-slate-800">
-            Aún no hay datos de experiencia del cliente cargados
-          </p>
-          <p className="text-sm text-slate-500 mt-1">
-            Cuando VIS IA publique este detalle, aparecerá aquí.
-          </p>
+          <p className="text-sm font-medium text-slate-800">{t.emptyTitle}</p>
+          <p className="text-sm text-slate-500 mt-1">{t.emptyBody}</p>
         </div>
       </PanelLayout>
     );
@@ -118,10 +115,7 @@ export default async function ExperienciaPage() {
   }
 
   return (
-    <PanelLayout
-      title="Experiencia del Cliente"
-      subtitle="Basado en fuentes públicas verificables — reseñas analizadas y puntuaciones de plataformas, sin mezclarlas"
-    >
+    <PanelLayout title={t.title} subtitle={t.subtitle}>
       <div className="space-y-6 max-w-3xl">
         {Array.from(byCategory.entries()).map(([category, signals]) => (
           <div key={category}>
@@ -130,19 +124,14 @@ export default async function ExperienciaPage() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {signals.map((s, idx) => (
-                <SignalCard key={idx} signal={s} />
+                <SignalCard key={idx} signal={s} language={language} />
               ))}
             </div>
           </div>
         ))}
       </div>
 
-      <p className="text-xs text-slate-400 mt-6 max-w-3xl">
-        Cada señal conserva su origen: las reseñas analizadas y las
-        puntuaciones publicadas por plataformas (Booking, Expedia, etc.)
-        son evidencia de distinto tipo y nunca se presentan como si fueran
-        lo mismo.
-      </p>
+      <p className="text-xs text-slate-400 mt-6 max-w-3xl">{t.footerNote}</p>
     </PanelLayout>
   );
 }

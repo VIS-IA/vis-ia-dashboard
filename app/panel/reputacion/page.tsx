@@ -1,5 +1,6 @@
-import { getReputationDetail, getOtherReputations } from "@/lib/queries";
+import { getReputationDetail, getOtherReputations, getClientLanguage } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
+import { getDictionary } from "@/lib/i18n";
 import { Star, MessageSquare, AlertTriangle, Globe } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -20,23 +21,20 @@ function Stars({ rating }: { rating: number }) {
 }
 
 export default async function ReputacionPage() {
-  const [detail, otherReputations] = await Promise.all([
+  const [detail, otherReputations, language] = await Promise.all([
     getReputationDetail(),
     getOtherReputations(),
+    getClientLanguage(),
   ]);
+  const t = getDictionary(language).reputacion;
 
   if (!detail) {
     return (
-      <PanelLayout title="Reputación">
+      <PanelLayout title={t.title}>
         <div className="bg-white rounded-xl border border-slate-200 p-8 max-w-lg text-center">
           <Star className="text-amber-400 mx-auto mb-3" size={28} />
-          <p className="text-sm font-medium text-slate-800">
-            Aún no hay datos de reputación cargados
-          </p>
-          <p className="text-sm text-slate-500 mt-1">
-            Cuando VIS IA publique el detalle de reseñas de tu negocio,
-            aparecerá aquí.
-          </p>
+          <p className="text-sm font-medium text-slate-800">{t.emptyTitle}</p>
+          <p className="text-sm text-slate-500 mt-1">{t.emptyBody}</p>
         </div>
       </PanelLayout>
     );
@@ -64,17 +62,14 @@ export default async function ReputacionPage() {
   const hasSignificantGap = gap >= 0.4;
 
   return (
-    <PanelLayout
-      title="Reputación"
-      subtitle="Google es tu reputación principal — otras plataformas se muestran como contexto"
-    >
+    <PanelLayout title={t.title} subtitle={t.subtitle}>
       <div className="max-w-3xl space-y-6">
         {detail.impactoExplicado && (
           <div className="bg-amber-50 border border-amber-100 rounded-xl p-5 flex gap-3">
             <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-1">
-                Por qué esto te afecta tanto
+                {t.whyThisAffectsYou}
               </p>
               <p className="text-sm text-amber-900">{detail.impactoExplicado}</p>
             </div>
@@ -86,13 +81,13 @@ export default async function ReputacionPage() {
           <div className="flex items-center gap-2 mb-3">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Reputación principal — Google
+              {t.mainReputationGoogle}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Rating card */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <p className="text-xs text-slate-400 mb-2">Calificación promedio</p>
+              <p className="text-xs text-slate-400 mb-2">{t.averageRating}</p>
               <div className="flex items-end gap-2 mb-1">
                 <span className="text-4xl font-bold text-slate-900">
                   {detail.avgRating.toFixed(1)}
@@ -101,14 +96,14 @@ export default async function ReputacionPage() {
               </div>
               <p className="text-xs text-slate-500">
                 {detail.avgRatingPrevious !== null
-                  ? `Anterior: ${detail.avgRatingPrevious.toFixed(1)}`
-                  : "Primer reporte"}
+                  ? `${getDictionary(language).common.before}: ${detail.avgRatingPrevious.toFixed(1)}`
+                  : getDictionary(language).common.firstReport}
               </p>
             </div>
 
             {/* Reviews total card */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <p className="text-xs text-slate-400 mb-2">Reseñas totales</p>
+              <p className="text-xs text-slate-400 mb-2">{t.totalReviews}</p>
               <div className="flex items-center gap-2 mb-1">
                 <MessageSquare size={20} className="text-blue-500" />
                 <span className="text-4xl font-bold text-slate-900">
@@ -117,8 +112,8 @@ export default async function ReputacionPage() {
               </div>
               <p className="text-xs text-slate-500">
                 {detail.totalReviewsPrevious !== null
-                  ? `Anterior: ${detail.totalReviewsPrevious}`
-                  : "Primer reporte"}
+                  ? `${getDictionary(language).common.before}: ${detail.totalReviewsPrevious}`
+                  : getDictionary(language).common.firstReport}
               </p>
             </div>
 
@@ -126,7 +121,7 @@ export default async function ReputacionPage() {
             {hasBreakdown && (
               <div className="bg-white rounded-xl border border-slate-200 p-6 md:col-span-2">
                 <p className="text-sm font-semibold text-slate-800 mb-4">
-                  Distribución de reseñas
+                  {t.reviewsDistribution}
                 </p>
                 <div className="w-full h-3 rounded-full overflow-hidden flex bg-slate-100 mb-4">
                   <div
@@ -145,15 +140,15 @@ export default async function ReputacionPage() {
                 <div className="flex flex-wrap gap-6 text-sm">
                   <span className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                    Positivas: {detail.positiveCount} ({pct(detail.positiveCount ?? 0)}%)
+                    {t.positive}: {detail.positiveCount} ({pct(detail.positiveCount ?? 0)}%)
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                    Neutrales: {detail.neutralCount} ({pct(detail.neutralCount ?? 0)}%)
+                    {t.neutral}: {detail.neutralCount} ({pct(detail.neutralCount ?? 0)}%)
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                    Negativas: {detail.negativeCount} ({pct(detail.negativeCount ?? 0)}%)
+                    {t.negative}: {detail.negativeCount} ({pct(detail.negativeCount ?? 0)}%)
                   </span>
                 </div>
               </div>
@@ -166,11 +161,9 @@ export default async function ReputacionPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-800">
-                    {detail.unrespondedNegative} reseñas negativas sin responder
+                    {t.unrespondedNegative(detail.unrespondedNegative)}
                   </p>
-                  <p className="text-xs text-slate-500">
-                    Revisa el Plan de Acción para priorizar esto
-                  </p>
+                  <p className="text-xs text-slate-500">{t.checkActionPlan}</p>
                 </div>
               </div>
             )}
@@ -185,7 +178,7 @@ export default async function ReputacionPage() {
             <div className="flex items-center gap-2 mb-3">
               <span className="w-2 h-2 rounded-full bg-blue-500" />
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Response Management
+                {t.responseManagement}
               </p>
             </div>
 
@@ -193,12 +186,13 @@ export default async function ReputacionPage() {
               <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-4 flex items-start gap-3">
                 <AlertTriangle size={16} className="text-red-600 mt-0.5 shrink-0" />
                 <p className="text-sm text-red-900">
-                  <span className="font-semibold">🔴 Fricción VIS — abandono de gestión de reputación:</span>{" "}
-                  la tasa de respuesta cayó de {detail.responseRatePercentPrevious}% a{" "}
-                  {detail.responseRatePercent}% frente al reporte anterior. Esto suele
-                  indicar un cambio operativo (menos personal, cambio de dueño, o
-                  descuido) que vale la pena investigar antes de que afecte más la
-                  reputación.
+                  <span className="font-semibold">
+                    🔴 {language === "en" ? "VIS Friction — reputation management abandoned:" : "Fricción VIS — abandono de gestión de reputación:"}
+                  </span>{" "}
+                  {t.frictionResponseManagement(
+                    detail.responseRatePercentPrevious ?? 0,
+                    detail.responseRatePercent ?? 0
+                  )}
                 </p>
               </div>
             )}
@@ -206,33 +200,33 @@ export default async function ReputacionPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {detail.reviewsResponded !== null && (
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
-                  <p className="text-[11px] text-slate-400 mb-1">Respondidas</p>
+                  <p className="text-[11px] text-slate-400 mb-1">{t.responded}</p>
                   <p className="text-xl font-bold text-emerald-600">{detail.reviewsResponded}</p>
                 </div>
               )}
               {detail.reviewsUnresponded !== null && (
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
-                  <p className="text-[11px] text-slate-400 mb-1">Sin responder</p>
+                  <p className="text-[11px] text-slate-400 mb-1">{t.unresponded}</p>
                   <p className="text-xl font-bold text-red-500">{detail.reviewsUnresponded}</p>
                 </div>
               )}
               {detail.responseRatePercent !== null && (
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
-                  <p className="text-[11px] text-slate-400 mb-1">Tasa de respuesta</p>
+                  <p className="text-[11px] text-slate-400 mb-1">{t.responseRate}</p>
                   <p className="text-xl font-bold text-slate-900">{detail.responseRatePercent}%</p>
                   {detail.responseRatePercentPrevious !== null && (
                     <p className="text-[11px] text-slate-400">
-                      Anterior: {detail.responseRatePercentPrevious}%
+                      {getDictionary(language).common.before}: {detail.responseRatePercentPrevious}%
                     </p>
                   )}
                 </div>
               )}
               {detail.avgResponseTimeDays !== null && (
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
-                  <p className="text-[11px] text-slate-400 mb-1">Tiempo promedio</p>
+                  <p className="text-[11px] text-slate-400 mb-1">{t.averageTime}</p>
                   <p className="text-xl font-bold text-slate-900">
                     {detail.avgResponseTimeDays.toFixed(1)}
-                    <span className="text-xs text-slate-400 font-normal"> días</span>
+                    <span className="text-xs text-slate-400 font-normal"> {t.days}</span>
                   </p>
                 </div>
               )}
@@ -246,7 +240,7 @@ export default async function ReputacionPage() {
             <div className="flex items-center gap-2 mb-3">
               <span className="w-2 h-2 rounded-full bg-slate-400" />
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Otras reputaciones
+                {t.otherReputations}
               </p>
             </div>
 
@@ -254,10 +248,10 @@ export default async function ReputacionPage() {
               <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-4 flex items-start gap-3">
                 <AlertTriangle size={16} className="text-amber-600 mt-0.5 shrink-0" />
                 <p className="text-sm text-amber-900">
-                  <span className="font-semibold">Señal VIS — brecha de reputación:</span>{" "}
-                  la percepción de tu negocio no es uniforme entre plataformas
-                  (diferencia de {gap.toFixed(1)} puntos sobre 5). Vale la pena
-                  investigar qué está generando esta diferencia.
+                  <span className="font-semibold">
+                    {language === "en" ? "VIS Signal — reputation gap:" : "Señal VIS — brecha de reputación:"}
+                  </span>{" "}
+                  {t.reputationGapSignal(gap.toFixed(1))}
                 </p>
               </div>
             )}
@@ -274,7 +268,7 @@ export default async function ReputacionPage() {
                     </p>
                     {r.reviewCount !== null && (
                       <p className="text-xs text-slate-400">
-                        {r.reviewCount} reseñas
+                        {t.reviewsCount(r.reviewCount)}
                       </p>
                     )}
                   </div>

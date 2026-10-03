@@ -4,6 +4,8 @@ import SignOutButton from "@/components/SignOutButton";
 import UpgradePlanButton from "@/components/UpgradePlanButton";
 import ChangePlanButton from "@/components/ChangePlanButton";
 import { PLAN_LABELS, planAtLeast, type PlanTier } from "@/lib/plan";
+import { getClientLanguage } from "@/lib/queries";
+import { getDictionary } from "@/lib/i18n";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +16,8 @@ export default async function MiCuentaPage({
   searchParams: { checkout?: string };
 }) {
   const supabase = createClient();
+  const language = await getClientLanguage();
+  const t = getDictionary(language).miCuenta;
 
   let user = null;
   let client: {
@@ -52,7 +56,7 @@ export default async function MiCuentaPage({
   const currentPlan = client?.plan ?? "diagnostic";
   const hasSubscription = Boolean(client?.stripe_subscription_id);
   const periodEndLabel = client?.current_period_end
-    ? new Date(client.current_period_end).toLocaleDateString("es-US", {
+    ? new Date(client.current_period_end).toLocaleDateString(language === "en" ? "en-US" : "es-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -60,41 +64,39 @@ export default async function MiCuentaPage({
     : null;
 
   return (
-    <PanelLayout title="Mi Cuenta">
+    <PanelLayout title={t.title}>
       {searchParams.checkout === "success" && (
         <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-sm rounded-xl p-4 max-w-md mb-4">
-          Pago recibido — tu plan se actualizará en unos segundos. Si no ves
-          el cambio de inmediato, refresca la página.
+          {t.paymentReceived}
         </div>
       )}
       {searchParams.checkout === "cancelled" && (
         <div className="bg-amber-50 border border-amber-100 text-amber-800 text-sm rounded-xl p-4 max-w-md mb-4">
-          El pago se canceló — no se hizo ningún cargo. Puedes intentarlo de
-          nuevo cuando quieras.
+          {t.paymentCancelled}
         </div>
       )}
 
       <div className="bg-white rounded-xl border border-slate-200 p-6 max-w-md space-y-4">
         <div>
-          <p className="text-xs text-slate-400">Correo</p>
+          <p className="text-xs text-slate-400">{t.email}</p>
           <p className="text-sm font-medium text-slate-800">{user?.email}</p>
         </div>
         {client && (
           <>
             <div>
-              <p className="text-xs text-slate-400">Negocio</p>
+              <p className="text-xs text-slate-400">{t.business}</p>
               <p className="text-sm font-medium text-slate-800">
                 {client.business_name}
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-400">ID VIS IA</p>
+              <p className="text-xs text-slate-400">{t.visId}</p>
               <p className="text-sm font-medium text-slate-800">
                 {client.client_code}
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-400">Plan actual</p>
+              <p className="text-xs text-slate-400">{t.currentPlan}</p>
               <p className="text-sm font-medium text-slate-800">
                 {PLAN_LABELS[currentPlan]}
               </p>
@@ -102,21 +104,18 @@ export default async function MiCuentaPage({
 
             {client.subscription_status === "past_due" && (
               <div className="bg-red-50 border border-red-100 text-red-700 text-xs rounded-lg p-3">
-                Tu último pago no se pudo procesar. Verifica tu método de
-                pago para evitar que se suspenda tu plan.
+                {t.pastDueWarning}
               </div>
             )}
 
             {client.cancel_at_period_end && (
               <div className="bg-amber-50 border border-amber-100 text-amber-800 text-xs rounded-lg p-3">
-                Tu plan se cancelará
-                {periodEndLabel ? ` el ${periodEndLabel}` : ""} y volverás a
-                Diagnostic.{" "}
+                {t.planWillCancel(periodEndLabel)}{" "}
                 <Link
                   href="/panel/mi-cuenta/cancelar-plan"
                   className="underline font-medium"
                 >
-                  Deshacer cancelación
+                  {t.undoCancellation}
                 </Link>
               </div>
             )}
@@ -125,9 +124,7 @@ export default async function MiCuentaPage({
               client.pending_plan &&
               client.pending_plan !== currentPlan && (
                 <div className="bg-blue-50 border border-blue-100 text-blue-800 text-xs rounded-lg p-3">
-                  Cambiarás a {PLAN_LABELS[client.pending_plan]}
-                  {periodEndLabel ? ` el ${periodEndLabel}` : ""}, cuando
-                  termine tu período actual.
+                  {t.planWillChange(PLAN_LABELS[client.pending_plan], periodEndLabel)}
                 </div>
               )}
           </>
@@ -137,10 +134,10 @@ export default async function MiCuentaPage({
         </div>
         <div className="pt-2 border-t border-slate-100 flex gap-4 text-xs text-slate-400">
           <Link href="/terminos" className="hover:text-slate-600 underline">
-            Términos de Servicio
+            {t.termsOfService}
           </Link>
           <Link href="/privacidad" className="hover:text-slate-600 underline">
-            Política de Privacidad
+            {t.privacyPolicy}
           </Link>
         </div>
       </div>
@@ -148,18 +145,16 @@ export default async function MiCuentaPage({
       {client && !hasSubscription && !planAtLeast(currentPlan, "intelligence") && (
         <div className="bg-white rounded-xl border border-slate-200 p-6 max-w-md mt-4">
           <p className="text-sm font-semibold text-slate-800 mb-1">
-            Subir de plan
+            {t.upgradePlan}
           </p>
-          <p className="text-xs text-slate-400 mb-4">
-            El pago se procesa de forma segura a través de Stripe.
-          </p>
+          <p className="text-xs text-slate-400 mb-4">{t.securePaymentNote}</p>
           <div className="flex flex-col sm:flex-row gap-2">
             {!planAtLeast(currentPlan, "pro") && (
-              <UpgradePlanButton plan="pro" label={`Actualizar a ${PLAN_LABELS.pro}`} />
+              <UpgradePlanButton plan="pro" label={t.upgradeTo(PLAN_LABELS.pro)} />
             )}
             <UpgradePlanButton
               plan="intelligence"
-              label={`Actualizar a ${PLAN_LABELS.intelligence}`}
+              label={t.upgradeTo(PLAN_LABELS.intelligence)}
             />
           </div>
         </div>
@@ -168,21 +163,17 @@ export default async function MiCuentaPage({
       {client && hasSubscription && !client.cancel_at_period_end && (
         <div className="bg-white rounded-xl border border-slate-200 p-6 max-w-md mt-4">
           <p className="text-sm font-semibold text-slate-800 mb-1">
-            Cambiar de plan
+            {t.changePlan}
           </p>
-          <p className="text-xs text-slate-400 mb-4">
-            Subir de plan se aplica de inmediato (con prorrateo). Bajar de
-            plan se programa para cuando termine tu período actual — nunca
-            pierdes lo que ya pagaste.
-          </p>
+          <p className="text-xs text-slate-400 mb-4">{t.changePlanNote}</p>
           <div className="flex flex-col sm:flex-row gap-2">
             {currentPlan === "intelligence" && (
-              <ChangePlanButton plan="pro" label={`Cambiar a ${PLAN_LABELS.pro}`} />
+              <ChangePlanButton plan="pro" label={t.changeTo(PLAN_LABELS.pro)} />
             )}
             {currentPlan === "pro" && (
               <ChangePlanButton
                 plan="intelligence"
-                label={`Actualizar a ${PLAN_LABELS.intelligence}`}
+                label={t.upgradeTo(PLAN_LABELS.intelligence)}
               />
             )}
           </div>
@@ -191,12 +182,12 @@ export default async function MiCuentaPage({
 
       {client && hasSubscription && (
         <p className="text-xs text-slate-400 mt-4 max-w-md">
-          ¿Ya no quieres continuar con tu plan?{" "}
+          {t.noLongerWantPlan}{" "}
           <Link
             href="/panel/mi-cuenta/cancelar-plan"
             className="underline hover:text-slate-600"
           >
-            Cancelar mi plan
+            {t.cancelMyPlan}
           </Link>
         </p>
       )}

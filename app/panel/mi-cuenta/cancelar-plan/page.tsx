@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import PanelLayout from "@/components/PanelLayout";
 import CancelPlanConfirm from "@/components/CancelPlanConfirm";
 import { PLAN_LABELS, type PlanTier } from "@/lib/plan";
+import { getClientLanguage } from "@/lib/queries";
+import { getDictionary } from "@/lib/i18n";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +16,8 @@ export const dynamic = "force-dynamic";
  */
 export default async function CancelarPlanPage() {
   const supabase = createClient();
+  const language = await getClientLanguage();
+  const t = getDictionary(language).cancelarPlan;
 
   const {
     data: { user },
@@ -36,7 +40,7 @@ export default async function CancelarPlanPage() {
   }
 
   const periodEndLabel = client?.current_period_end
-    ? new Date(client.current_period_end).toLocaleDateString("es-US", {
+    ? new Date(client.current_period_end).toLocaleDateString(language === "en" ? "en-US" : "es-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -44,12 +48,11 @@ export default async function CancelarPlanPage() {
     : null;
 
   return (
-    <PanelLayout title="Cancelar mi plan">
+    <PanelLayout title={t.title}>
       <div className="bg-white rounded-xl border border-slate-200 p-6 max-w-lg space-y-4">
         {!client?.stripe_subscription_id ? (
           <p className="text-sm text-slate-700">
-            No tienes una suscripción activa que cancelar. Tu plan actual es{" "}
-            {PLAN_LABELS[client?.plan ?? "diagnostic"]}.
+            {t.noActiveSubscription(PLAN_LABELS[client?.plan ?? "diagnostic"])}
           </p>
         ) : (
           <CancelPlanConfirm
@@ -63,7 +66,7 @@ export default async function CancelarPlanPage() {
             href="/panel/mi-cuenta"
             className="text-xs text-slate-400 hover:text-slate-600 underline"
           >
-            Volver a Mi Cuenta
+            {t.backToAccount}
           </Link>
         </div>
       </div>

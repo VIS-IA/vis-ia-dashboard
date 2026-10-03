@@ -1,7 +1,8 @@
-import { getWebsiteDetail, getClientPlan } from "@/lib/queries";
+import { getWebsiteDetail, getClientPlan, getClientLanguage } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import LockedPreview from "@/components/LockedPreview";
 import { planAtLeast } from "@/lib/plan";
+import { getDictionary } from "@/lib/i18n";
 import {
   Globe,
   Smartphone,
@@ -37,14 +38,16 @@ function ImpactPill({ level }: { level: string }) {
 function TriStateTile({
   label,
   value,
+  t,
 }: {
   label: string;
   value: boolean | null;
+  t: ReturnType<typeof getDictionary>["presenciaWeb"];
 }) {
   const Icon = value === null ? HelpCircle : value ? CheckCircle2 : XCircle;
   const color =
     value === null ? "text-slate-400" : value ? "text-emerald-600" : "text-red-500";
-  const text = value === null ? "No evaluado" : value ? "Sí" : "No";
+  const text = value === null ? t.notEvaluated : value ? t.yes : t.no;
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4">
@@ -57,7 +60,13 @@ function TriStateTile({
   );
 }
 
-function FindingCard({ finding }: { finding: WebsiteFinding }) {
+function FindingCard({
+  finding,
+  evidenciaLabel,
+}: {
+  finding: WebsiteFinding;
+  evidenciaLabel: string;
+}) {
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
       <div className="p-5 flex flex-col sm:flex-row sm:items-start gap-4">
@@ -82,7 +91,7 @@ function FindingCard({ finding }: { finding: WebsiteFinding }) {
           <div className="flex gap-2.5 pt-4">
             <AlertCircle size={14} className="text-slate-400 mt-0.5 shrink-0" />
             <p className="text-sm text-slate-600">
-              <span className="font-medium text-slate-700">Evidencia: </span>
+              <span className="font-medium text-slate-700">{evidenciaLabel} </span>
               {finding.evidencia}
             </p>
           </div>
@@ -92,45 +101,25 @@ function FindingCard({ finding }: { finding: WebsiteFinding }) {
   );
 }
 
-const SAMPLE_FINDINGS: WebsiteFinding[] = [
-  {
-    titulo: "El horario publicado no coincide con Google",
-    descripcion:
-      "La página web dice que cierran a las 6pm, pero Google Business Profile dice 8pm — esta inconsistencia genera desconfianza y llamadas perdidas.",
-    impacto: "Alto",
-    categoria: "Información de contacto",
-    evidencia: null,
-  },
-  {
-    titulo: "Sin botón de reserva directa",
-    descripcion:
-      "Los visitantes tienen que llamar por teléfono para reservar — no hay forma de reservar en línea desde la propia web.",
-    impacto: "Media",
-    categoria: "Reservas online",
-    evidencia: null,
-  },
-];
-
 export default async function PresenciaWebPage() {
-  const plan = await getClientPlan();
+  const [plan, language] = await Promise.all([getClientPlan(), getClientLanguage()]);
+  const t = getDictionary(language).presenciaWeb;
+  const sampleFindings: WebsiteFinding[] = t.sampleFindings.map((f) => ({ ...f, evidencia: null }));
 
   if (!planAtLeast(plan, "pro")) {
     return (
-      <PanelLayout
-        title="Presencia Web"
-        subtitle="Qué tan bien está trabajando tu propia página web para ti"
-      >
-        <LockedPreview feature="El análisis de tu Presencia Web" minPlan="pro">
+      <PanelLayout title={t.title} subtitle={t.subtitle}>
+        <LockedPreview feature={t.title} minPlan="pro" language={language}>
           <div className="space-y-6 max-w-2xl">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <TriStateTile label="¿Tiene página web?" value={true} />
-              <TriStateTile label="Adaptada a celular" value={false} />
-              <TriStateTile label="Info. de contacto consistente" value={false} />
-              <TriStateTile label="Reservas en línea" value={false} />
+              <TriStateTile label={t.hasWebsite} value={true} t={t} />
+              <TriStateTile label={t.mobileFriendly} value={false} t={t} />
+              <TriStateTile label={t.consistentContactInfo} value={false} t={t} />
+              <TriStateTile label={t.onlineBooking} value={false} t={t} />
             </div>
             <div className="space-y-4">
-              {SAMPLE_FINDINGS.map((f, idx) => (
-                <FindingCard key={idx} finding={f} />
+              {sampleFindings.map((f, idx) => (
+                <FindingCard key={idx} finding={f} evidenciaLabel={t.evidencia} />
               ))}
             </div>
           </div>
@@ -143,15 +132,11 @@ export default async function PresenciaWebPage() {
 
   if (!detail) {
     return (
-      <PanelLayout title="Presencia Web">
+      <PanelLayout title={t.title}>
         <div className="bg-white rounded-xl border border-slate-200 p-8 max-w-lg text-center">
           <Globe className="text-blue-400 mx-auto mb-3" size={28} />
-          <p className="text-sm font-medium text-slate-800">
-            Aún no hay un análisis de tu página web cargado
-          </p>
-          <p className="text-sm text-slate-500 mt-1">
-            Cuando VIS IA publique este detalle, aparecerá aquí.
-          </p>
+          <p className="text-sm font-medium text-slate-800">{t.emptyTitle}</p>
+          <p className="text-sm text-slate-500 mt-1">{t.emptyBody}</p>
         </div>
       </PanelLayout>
     );
@@ -160,10 +145,7 @@ export default async function PresenciaWebPage() {
   const { analysis, findings } = detail;
 
   return (
-    <PanelLayout
-      title="Presencia Web"
-      subtitle="Qué tan bien está trabajando tu propia página web para ti — separado de tus reseñas y redes sociales"
-    >
+    <PanelLayout title={t.title} subtitle={t.subtitle}>
       <div className="max-w-2xl space-y-6">
         {analysis.websiteUrl && (
           <a
@@ -177,13 +159,14 @@ export default async function PresenciaWebPage() {
         )}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <TriStateTile label="¿Tiene página web?" value={analysis.hasWebsite} />
-          <TriStateTile label="Adaptada a celular" value={analysis.mobileFriendly} />
+          <TriStateTile label={t.hasWebsite} value={analysis.hasWebsite} t={t} />
+          <TriStateTile label={t.mobileFriendly} value={analysis.mobileFriendly} t={t} />
           <TriStateTile
-            label="Info. de contacto consistente"
+            label={t.consistentContactInfo}
             value={analysis.contactInfoConsistent}
+            t={t}
           />
-          <TriStateTile label="Reservas en línea" value={analysis.hasOnlineBooking} />
+          <TriStateTile label={t.onlineBooking} value={analysis.hasOnlineBooking} t={t} />
         </div>
 
         {analysis.lastContentUpdateLabel && (
@@ -192,9 +175,7 @@ export default async function PresenciaWebPage() {
               <CalendarClock size={16} className="text-slate-500" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-800">
-                Última actualización de contenido estimada
-              </p>
+              <p className="text-sm font-semibold text-slate-800">{t.lastContentUpdate}</p>
               <p className="text-xs text-slate-500">{analysis.lastContentUpdateLabel}</p>
             </div>
           </div>
@@ -204,7 +185,7 @@ export default async function PresenciaWebPage() {
           <BadgeCheck size={18} className="text-blue-600 shrink-0 mt-0.5" />
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 mb-1">
-              Evaluación general
+              {t.overallAssessment}
             </p>
             <p className="text-sm text-blue-900">{analysis.overallAssessment}</p>
           </div>
@@ -213,11 +194,11 @@ export default async function PresenciaWebPage() {
         {findings.length > 0 && (
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3 flex items-center gap-1.5">
-              <Smartphone size={13} /> Hallazgos específicos
+              <Smartphone size={13} /> {t.specificFindings}
             </p>
             <div className="space-y-4">
               {findings.map((f, idx) => (
-                <FindingCard key={idx} finding={f} />
+                <FindingCard key={idx} finding={f} evidenciaLabel={t.evidencia} />
               ))}
             </div>
           </div>

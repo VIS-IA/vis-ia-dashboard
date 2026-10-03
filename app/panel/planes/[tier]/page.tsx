@@ -3,72 +3,11 @@ import { notFound } from "next/navigation";
 import { CheckCircle2, Lock, ArrowRight } from "lucide-react";
 import PanelLayout from "@/components/PanelLayout";
 import UpgradePlanButton from "@/components/UpgradePlanButton";
-import { getClientPlan } from "@/lib/queries";
+import { getClientPlan, getClientLanguage } from "@/lib/queries";
 import { PLAN_LABELS, planAtLeast, type PlanTier } from "@/lib/plan";
+import { getDictionary } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
-
-interface PlanItem {
-  label: string;
-  href?: string;
-}
-
-interface PlanContent {
-  title: string;
-  tagline: string;
-  items: PlanItem[];
-  note?: string;
-}
-
-// Contenido informativo de cada plan — lo que el cliente ve al dar clic
-// en "Ver todo lo que incluye" desde el menú lateral. La idea es que
-// pueda leer todo lo que trae Pro e Intelligence y se motive a subir de
-// nivel, aunque hoy no tenga acceso a esas secciones.
-const PLAN_CONTENT: Record<PlanTier, PlanContent> = {
-  diagnostic: {
-    title: "Plan Diagnostic",
-    tagline: "La base de tu panel VIS IA: un diagnóstico completo de tu negocio.",
-    items: [
-      { label: "15 Preguntas internas de diagnóstico", href: "/panel/preguntas" },
-      { label: "VIS Score — tu puntaje general", href: "/panel/vis-score" },
-      { label: "Pérdida Invisible — lo que te está costando no resolver", href: "/panel/perdidas" },
-      { label: "Valor Oculto — oportunidades detectadas", href: "/panel/oportunidades" },
-      { label: "Reputación — reseñas y presencia online", href: "/panel/reputacion" },
-      { label: "Experiencia del Cliente", href: "/panel/experiencia" },
-      { label: "Competencia — cómo te comparas en tu zona", href: "/panel/competencia" },
-      { label: "Evidencia Visual", href: "/panel/evidencia" },
-      { label: "Plan de Acción con prioridades", href: "/panel/plan-accion" },
-      { label: "Reportes descargables", href: "/panel/reportes" },
-    ],
-  },
-  pro: {
-    title: "Plan Pro",
-    tagline: "Todo lo de Diagnostic, más el seguimiento de tu propio progreso mes a mes.",
-    items: [
-      { label: "Todo lo incluido en el plan Diagnostic" },
-      { label: "Comparación Completa — tu negocio antes vs. ahora, reporte a reporte", href: "/panel/comparacion" },
-      { label: "Presencia Web — análisis de tu propia página web", href: "/panel/presencia-web" },
-      { label: "Redes Sociales — qué tan presente y activo estás en Instagram y Facebook", href: "/panel/redes-sociales" },
-      { label: "Noticias y Menciones — qué se dice de ti fuera de tus propios canales", href: "/panel/noticias" },
-      { label: "Evolución del Sitio Web — antes vs. ahora y tráfico de visitantes", href: "/panel/evolucion-web" },
-      { label: "Evolución del VIS Score en el tiempo (gráfico histórico)", href: "/panel/vis-score" },
-      { label: "1 mes gratis del Asistente VIS (IA) al activarlo por primera vez" },
-      { label: "Análisis mensual garantizado — tu negocio se re-analiza todos los meses" },
-    ],
-  },
-  intelligence: {
-    title: "Plan Intelligence",
-    tagline: "El plan más completo: inteligencia artificial y análisis de tendencias sin límite de tiempo.",
-    items: [
-      { label: "Todo lo incluido en los planes Diagnostic y Pro" },
-      { label: "Asistente VIS (IA) con acceso permanente — pregúntale lo que quieras sobre tu negocio", href: "/panel/asistente" },
-      { label: "Análisis de Tendencias — evolución de tu negocio en el tiempo", href: "/panel/tendencias" },
-      { label: "Frecuencia de análisis más alta que Pro" },
-    ],
-    note:
-      "Seguimos ampliando las funciones avanzadas de Intelligence — lo que ves arriba ya está disponible hoy en tu panel.",
-  },
-};
 
 export default async function PlanDetailPage({
   params,
@@ -76,10 +15,11 @@ export default async function PlanDetailPage({
   params: { tier: string };
 }) {
   const tier = params.tier as PlanTier;
-  if (!(tier in PLAN_CONTENT)) notFound();
+  const [plan, language] = await Promise.all([getClientPlan(), getClientLanguage()]);
+  const t = getDictionary(language).planDetail;
+  if (!(tier in t.content)) notFound();
 
-  const content = PLAN_CONTENT[tier];
-  const plan = await getClientPlan();
+  const content = t.content[tier];
 
   const isCurrent = plan === tier;
   const alreadyIncluded = planAtLeast(plan, tier) && !isCurrent;
@@ -90,18 +30,18 @@ export default async function PlanDetailPage({
       <div className="max-w-2xl space-y-6">
         {isCurrent && (
           <span className="inline-block bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-            Tu plan actual
+            {t.currentPlanBadge}
           </span>
         )}
         {alreadyIncluded && (
           <span className="inline-block bg-emerald-100 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full">
-            Ya incluido en tu plan {PLAN_LABELS[plan]}
+            {t.alreadyIncludedBadge(PLAN_LABELS[plan])}
           </span>
         )}
 
         <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Qué incluye
+            {t.whatsIncluded}
           </p>
           <ul className="space-y-3">
             {content.items.map((item) => (
@@ -117,7 +57,7 @@ export default async function PlanDetailPage({
                     href={item.href}
                     className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 shrink-0 whitespace-nowrap"
                   >
-                    Abrir <ArrowRight size={12} />
+                    {t.open} <ArrowRight size={12} />
                   </Link>
                 )}
               </li>
@@ -131,9 +71,9 @@ export default async function PlanDetailPage({
         {locked && (
           <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 space-y-3">
             <p className="text-sm font-medium text-slate-800">
-              Sube al plan {PLAN_LABELS[tier]} para tener acceso a todo esto.
+              {t.upgradeToPlan(PLAN_LABELS[tier])}
             </p>
-            <UpgradePlanButton plan={tier} label={`Subir a ${PLAN_LABELS[tier]}`} />
+            <UpgradePlanButton plan={tier} label={t.upgradeButton(PLAN_LABELS[tier])} />
           </div>
         )}
       </div>

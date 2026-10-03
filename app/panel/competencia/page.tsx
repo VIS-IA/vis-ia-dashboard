@@ -1,23 +1,21 @@
-import { getCompetitors } from "@/lib/queries";
+import { getCompetitors, getClientLanguage } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
+import { getDictionary } from "@/lib/i18n";
 import { BarChart3, Star } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function CompetenciaPage() {
-  const competitors = await getCompetitors();
+  const [competitors, language] = await Promise.all([getCompetitors(), getClientLanguage()]);
+  const t = getDictionary(language).competencia;
 
   if (competitors.length === 0) {
     return (
-      <PanelLayout title="Competencia">
+      <PanelLayout title={t.title}>
         <div className="bg-white rounded-xl border border-slate-200 p-8 max-w-lg text-center">
           <BarChart3 className="text-purple-400 mx-auto mb-3" size={28} />
-          <p className="text-sm font-medium text-slate-800">
-            Aún no hay comparación de competencia cargada
-          </p>
-          <p className="text-sm text-slate-500 mt-1">
-            Cuando VIS IA publique este detalle, aparecerá aquí.
-          </p>
+          <p className="text-sm font-medium text-slate-800">{t.emptyTitle}</p>
+          <p className="text-sm text-slate-500 mt-1">{t.emptyBody}</p>
         </div>
       </PanelLayout>
     );
@@ -26,10 +24,7 @@ export default async function CompetenciaPage() {
   const maxRating = Math.max(...competitors.map((c) => c.rating), 5);
 
   return (
-    <PanelLayout
-      title="Competencia"
-      subtitle="Cómo te comparas con negocios similares en tu zona"
-    >
+    <PanelLayout title={t.title} subtitle={t.subtitle}>
       <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100 max-w-2xl">
         {competitors.map((c, idx) => (
           <div
@@ -44,7 +39,7 @@ export default async function CompetenciaPage() {
                   c.isYou ? "text-blue-700" : "text-slate-800"
                 }`}
               >
-                {c.name} {c.isYou && "(Tú)"}
+                {c.name} {c.isYou && `(${t.you})`}
               </p>
               <div className="w-full h-1.5 rounded-full bg-slate-100 mt-2 overflow-hidden">
                 <div
@@ -63,7 +58,7 @@ export default async function CompetenciaPage() {
                   {c.rating.toFixed(1)}
                 </span>
               </div>
-              <p className="text-xs text-slate-400">{c.reviewCount} reseñas</p>
+              <p className="text-xs text-slate-400">{t.reviewsCount(c.reviewCount)}</p>
             </div>
           </div>
         ))}

@@ -1,22 +1,19 @@
-import { getReportHistory } from "@/lib/queries";
+import { getReportHistory, getClientLanguage } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import { getVisStatusPresentation } from "@/lib/visStatus";
+import { getDictionary } from "@/lib/i18n";
 import { FileText } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function ReportesPage() {
-  const reports = await getReportHistory();
+  const [reports, language] = await Promise.all([getReportHistory(), getClientLanguage()]);
+  const t = getDictionary(language).reportes;
 
   return (
-    <PanelLayout
-      title="Reportes"
-      subtitle="Todos los análisis publicados para tu negocio"
-    >
+    <PanelLayout title={t.title} subtitle={t.subtitle}>
       {reports.length === 0 ? (
-        <p className="text-sm text-slate-500">
-          Aún no hay reportes publicados.
-        </p>
+        <p className="text-sm text-slate-500">{t.empty}</p>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100 max-w-2xl">
           {reports.map((r) => (
@@ -26,7 +23,7 @@ export default async function ReportesPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-800">
-                  Análisis del {r.analysisDate}
+                  {t.analysisFrom(r.analysisDate)}
                 </p>
                 <p className="text-xs text-slate-500">
                   {getVisStatusPresentation(r.visScoreStatus).label}
@@ -39,7 +36,7 @@ export default async function ReportesPage() {
                 </span>
               ) : (
                 <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">
-                  Pendiente
+                  {t.pending}
                 </span>
               )}
             </div>

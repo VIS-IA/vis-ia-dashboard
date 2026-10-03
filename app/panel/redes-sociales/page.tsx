@@ -1,7 +1,8 @@
-import { getSocialMediaDetail, getClientPlan } from "@/lib/queries";
+import { getSocialMediaDetail, getClientPlan, getClientLanguage } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import LockedPreview from "@/components/LockedPreview";
 import { planAtLeast } from "@/lib/plan";
+import { getDictionary } from "@/lib/i18n";
 import {
   Instagram,
   Facebook,
@@ -38,7 +39,7 @@ function ImpactPill({ level }: { level: string }) {
   );
 }
 
-function ProfileCard({ profile }: { profile: SocialProfile }) {
+function ProfileCard({ profile, t }: { profile: SocialProfile; t: ReturnType<typeof getDictionary>["redesSociales"] }) {
   const Icon = PLATFORM_ICON[profile.platform] ?? Share2;
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5">
@@ -66,31 +67,31 @@ function ProfileCard({ profile }: { profile: SocialProfile }) {
       <div className="grid grid-cols-2 gap-3 text-sm">
         {profile.followers !== null && (
           <div>
-            <p className="text-[11px] text-slate-400">Seguidores</p>
+            <p className="text-[11px] text-slate-400">{t.followers}</p>
             <p className="font-semibold text-slate-800">{profile.followers.toLocaleString("en-US")}</p>
           </div>
         )}
         {profile.postingFrequencyLabel && (
           <div>
-            <p className="text-[11px] text-slate-400">Frecuencia</p>
+            <p className="text-[11px] text-slate-400">{t.frequency}</p>
             <p className="font-semibold text-slate-800">{profile.postingFrequencyLabel}</p>
           </div>
         )}
         {profile.lastPostLabel && (
           <div>
-            <p className="text-[11px] text-slate-400">Última publicación</p>
+            <p className="text-[11px] text-slate-400">{t.lastPost}</p>
             <p className="font-semibold text-slate-800">{profile.lastPostLabel}</p>
           </div>
         )}
         {profile.respondsToComments !== null && (
           <div>
-            <p className="text-[11px] text-slate-400">Responde comentarios</p>
+            <p className="text-[11px] text-slate-400">{t.respondsToComments}</p>
             <p
               className={`font-semibold ${
                 profile.respondsToComments ? "text-emerald-600" : "text-red-500"
               }`}
             >
-              {profile.respondsToComments ? "Sí" : "No"}
+              {profile.respondsToComments ? t.yes : t.no}
             </p>
           </div>
         )}
@@ -99,7 +100,7 @@ function ProfileCard({ profile }: { profile: SocialProfile }) {
   );
 }
 
-function FindingCard({ finding }: { finding: SocialFinding }) {
+function FindingCard({ finding, t }: { finding: SocialFinding; t: ReturnType<typeof getDictionary>["redesSociales"] }) {
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
       <div className="p-5 flex flex-col sm:flex-row sm:items-start gap-4">
@@ -125,7 +126,7 @@ function FindingCard({ finding }: { finding: SocialFinding }) {
             <div className="flex gap-2.5 pt-4">
               <AlertCircle size={14} className="text-slate-400 mt-0.5 shrink-0" />
               <p className="text-sm text-slate-600">
-                <span className="font-medium text-slate-700">Evidencia: </span>
+                <span className="font-medium text-slate-700">{t.evidencia} </span>
                 {finding.evidencia}
               </p>
             </div>
@@ -133,12 +134,12 @@ function FindingCard({ finding }: { finding: SocialFinding }) {
           {finding.accionRecomendada && (
             <div className="bg-purple-50 rounded-lg p-3.5 space-y-1.5">
               <p className="text-sm text-purple-900">
-                <span className="font-semibold">Qué hacer: </span>
+                <span className="font-semibold">{t.whatToDo} </span>
                 {finding.accionRecomendada}
               </p>
               {finding.porQue && (
                 <p className="text-sm text-purple-800/80">
-                  <span className="font-semibold">Por qué: </span>
+                  <span className="font-semibold">{t.whyLabel} </span>
                   {finding.porQue}
                 </p>
               )}
@@ -150,48 +151,23 @@ function FindingCard({ finding }: { finding: SocialFinding }) {
   );
 }
 
-const SAMPLE_PROFILES: SocialProfile[] = [
-  {
-    platform: "Instagram",
-    handle: "@negocio_ejemplo",
-    profileUrl: null,
-    followers: 842,
-    lastPostLabel: "Hace 6 semanas",
-    postingFrequencyLabel: "~1 publicación al mes",
-    respondsToComments: false,
-  },
-];
-
-const SAMPLE_FINDINGS: SocialFinding[] = [
-  {
-    titulo: "Sin presencia propia en redes sociales",
-    descripcion:
-      "No se encontró una cuenta de Instagram o Facebook administrada específicamente por este negocio — solo aparece la cuenta genérica de la marca/franquicia.",
-    impacto: "Alto",
-    categoria: "Presencia",
-    evidencia: null,
-    accionRecomendada: "Crear una cuenta propia y publicar contenido real del negocio cada semana.",
-    porQue: "Los clientes deciden con fotos recientes, no con las genéricas de la marca.",
-  },
-];
-
 export default async function RedesSocialesPage() {
-  const plan = await getClientPlan();
+  const [plan, language] = await Promise.all([getClientPlan(), getClientLanguage()]);
+  const t = getDictionary(language).redesSociales;
+  const sampleProfiles: SocialProfile[] = [{ ...t.sampleProfile, profileUrl: null, followers: 842 }];
+  const sampleFindings: SocialFinding[] = t.sampleFindings.map((f) => ({ ...f, evidencia: null }));
 
   if (!planAtLeast(plan, "pro")) {
     return (
-      <PanelLayout
-        title="Redes Sociales"
-        subtitle="Qué tan presente y activo está tu negocio en Instagram y Facebook"
-      >
-        <LockedPreview feature="El análisis de tus Redes Sociales" minPlan="pro">
+      <PanelLayout title={t.title} subtitle={t.subtitle}>
+        <LockedPreview feature={t.title} minPlan="pro" language={language}>
           <div className="space-y-6 max-w-2xl">
-            {SAMPLE_PROFILES.map((p, idx) => (
-              <ProfileCard key={idx} profile={p} />
+            {sampleProfiles.map((p, idx) => (
+              <ProfileCard key={idx} profile={p} t={t} />
             ))}
             <div className="space-y-4">
-              {SAMPLE_FINDINGS.map((f, idx) => (
-                <FindingCard key={idx} finding={f} />
+              {sampleFindings.map((f, idx) => (
+                <FindingCard key={idx} finding={f} t={t} />
               ))}
             </div>
           </div>
@@ -204,15 +180,11 @@ export default async function RedesSocialesPage() {
 
   if (!detail) {
     return (
-      <PanelLayout title="Redes Sociales">
+      <PanelLayout title={t.title}>
         <div className="bg-white rounded-xl border border-slate-200 p-8 max-w-lg text-center">
           <Share2 className="text-purple-400 mx-auto mb-3" size={28} />
-          <p className="text-sm font-medium text-slate-800">
-            Aún no hay un análisis de tus redes sociales cargado
-          </p>
-          <p className="text-sm text-slate-500 mt-1">
-            Cuando VIS IA publique este detalle, aparecerá aquí.
-          </p>
+          <p className="text-sm font-medium text-slate-800">{t.emptyTitle}</p>
+          <p className="text-sm text-slate-500 mt-1">{t.emptyBody}</p>
         </div>
       </PanelLayout>
     );
@@ -221,16 +193,13 @@ export default async function RedesSocialesPage() {
   const { overallAssessment, profiles, findings } = detail;
 
   return (
-    <PanelLayout
-      title="Redes Sociales"
-      subtitle="Qué tan presente y activo está tu negocio en Instagram y Facebook — separado de tus reseñas"
-    >
+    <PanelLayout title={t.title} subtitle={t.subtitle}>
       <div className="max-w-2xl space-y-6">
         <div className="bg-purple-50 border border-purple-100 rounded-xl p-5 flex gap-3">
           <BadgeCheck size={18} className="text-purple-600 shrink-0 mt-0.5" />
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-purple-700 mb-1">
-              Evaluación general
+              {t.overallAssessment}
             </p>
             <p className="text-sm text-purple-900">{overallAssessment}</p>
           </div>
@@ -239,7 +208,7 @@ export default async function RedesSocialesPage() {
         {profiles.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {profiles.map((p, idx) => (
-              <ProfileCard key={idx} profile={p} />
+              <ProfileCard key={idx} profile={p} t={t} />
             ))}
           </div>
         ) : (
@@ -247,21 +216,18 @@ export default async function RedesSocialesPage() {
             <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
               <XCircle size={16} className="text-red-500" />
             </div>
-            <p className="text-sm text-slate-700">
-              No se encontró ninguna cuenta de Instagram o Facebook administrada
-              específicamente por este negocio.
-            </p>
+            <p className="text-sm text-slate-700">{t.noProfileFound}</p>
           </div>
         )}
 
         {findings.length > 0 && (
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3 flex items-center gap-1.5">
-              <Users2 size={13} /> Hallazgos específicos
+              <Users2 size={13} /> {t.specificFindings}
             </p>
             <div className="space-y-4">
               {findings.map((f, idx) => (
-                <FindingCard key={idx} finding={f} />
+                <FindingCard key={idx} finding={f} t={t} />
               ))}
             </div>
           </div>

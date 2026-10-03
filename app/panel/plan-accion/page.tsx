@@ -1,6 +1,7 @@
-import { getDashboardData } from "@/lib/queries";
+import { getDashboardData, getClientLanguage } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import ShareFindingButton from "@/components/ShareFindingButton";
+import { getDictionary } from "@/lib/i18n";
 import {
   AlertTriangle,
   Search,
@@ -30,7 +31,7 @@ function PriorityPill({ level }: { level: string }) {
   );
 }
 
-function CertaintyPill({ level }: { level: string }) {
+function CertaintyPill({ level, certeza }: { level: string; certeza: string }) {
   const styles: Record<string, string> = {
     Confirmado: "bg-emerald-50 text-emerald-700 border-emerald-200",
     Medido: "bg-blue-50 text-blue-700 border-blue-200",
@@ -44,7 +45,7 @@ function CertaintyPill({ level }: { level: string }) {
         styles[level] || "bg-slate-100 text-slate-600 border-slate-200"
       }`}
     >
-      Certeza: {level}
+      {certeza}: {level}
     </span>
   );
 }
@@ -78,27 +79,22 @@ function Section({
 }
 
 export default async function PlanAccionPage() {
-  const data = await getDashboardData();
+  const [data, language] = await Promise.all([getDashboardData(), getClientLanguage()]);
+  const t = getDictionary(language).planAccion;
+  const common = getDictionary(language).common;
 
   if (!data) {
     return (
-      <PanelLayout title="Plan de Acción">
-        <p className="text-sm text-slate-500">
-          Aún no hay un análisis disponible para tu negocio.
-        </p>
+      <PanelLayout title={t.title}>
+        <p className="text-sm text-slate-500">{common.noAnalysisAvailable}</p>
       </PanelLayout>
     );
   }
 
   return (
-    <PanelLayout
-      title="Plan de Acción"
-      subtitle="El análisis completo detrás de cada prioridad: qué encontramos, por qué importa, y cómo saber si funcionó"
-    >
+    <PanelLayout title={t.title} subtitle={t.subtitle}>
       {data.acciones.length === 0 ? (
-        <p className="text-sm text-slate-500">
-          No hay acciones pendientes en este momento.
-        </p>
+        <p className="text-sm text-slate-500">{t.empty}</p>
       ) : (
         <div className="space-y-5 max-w-3xl">
           {data.acciones.map((a, idx) => {
@@ -106,15 +102,15 @@ export default async function PlanAccionPage() {
               a.problema || a.evidencia || a.causaProbable || a.nivelCerteza;
 
             const shareText = [
-              `PLAN DE ACCIÓN — ${data.business.name}`,
+              t.shareTitle(data.business.name),
               a.texto,
-              a.problema ? `Problema: ${a.problema}` : null,
-              a.evidencia ? `Evidencia: ${a.evidencia}` : null,
-              a.causaProbable ? `Causa probable: ${a.causaProbable}` : null,
-              a.detalle ? `Impacto: ${a.detalle}` : null,
-              a.nivelCerteza ? `Certeza: ${a.nivelCerteza}` : null,
-              a.metrica ? `Métrica de éxito: ${a.metrica}` : null,
-              `Prioridad: ${a.prioridad}`,
+              a.problema ? `${t.problema}: ${a.problema}` : null,
+              a.evidencia ? `${t.evidencia}: ${a.evidencia}` : null,
+              a.causaProbable ? `${t.causaProbable}: ${a.causaProbable}` : null,
+              a.detalle ? `${t.impacto}: ${a.detalle}` : null,
+              a.nivelCerteza ? `${common.certeza}: ${a.nivelCerteza}` : null,
+              a.metrica ? `${t.successMetric}: ${a.metrica}` : null,
+              `${t.priority}: ${a.prioridad}`,
             ]
               .filter(Boolean)
               .join("\n");
@@ -136,7 +132,9 @@ export default async function PlanAccionPage() {
                   </div>
                   <div className="flex flex-row sm:flex-col items-start sm:items-end gap-1.5 shrink-0 pl-11 sm:pl-0">
                     <PriorityPill level={a.prioridad} />
-                    {a.nivelCerteza && <CertaintyPill level={a.nivelCerteza} />}
+                    {a.nivelCerteza && (
+                      <CertaintyPill level={a.nivelCerteza} certeza={common.certeza} />
+                    )}
                   </div>
                 </div>
 
@@ -146,7 +144,7 @@ export default async function PlanAccionPage() {
                     {a.problema && (
                       <Section
                         icon={AlertTriangle}
-                        label="Problema"
+                        label={t.problema}
                         color="bg-red-50 text-red-500"
                       >
                         {a.problema}
@@ -155,7 +153,7 @@ export default async function PlanAccionPage() {
                     {a.evidencia && (
                       <Section
                         icon={Search}
-                        label="Evidencia"
+                        label={t.evidencia}
                         color="bg-blue-50 text-blue-500"
                       >
                         {a.evidencia}
@@ -164,7 +162,7 @@ export default async function PlanAccionPage() {
                     {a.causaProbable && (
                       <Section
                         icon={GitBranch}
-                        label="Causa probable"
+                        label={t.causaProbable}
                         color="bg-purple-50 text-purple-500"
                       >
                         {a.causaProbable}
@@ -173,7 +171,7 @@ export default async function PlanAccionPage() {
                     {a.detalle && (
                       <Section
                         icon={TrendingDown}
-                        label="Impacto"
+                        label={t.impacto}
                         color="bg-amber-50 text-amber-600"
                       >
                         {a.detalle}
@@ -182,7 +180,7 @@ export default async function PlanAccionPage() {
                     {a.metrica && (
                       <Section
                         icon={Target}
-                        label="Cómo sabremos que funcionó"
+                        label={t.howWeWillKnowItWorked}
                         color="bg-emerald-50 text-emerald-600"
                       >
                         {a.metrica}
@@ -191,14 +189,14 @@ export default async function PlanAccionPage() {
                     {a.fechaRevision && (
                       <Section
                         icon={Calendar}
-                        label="Fecha de revisión"
+                        label={t.reviewDate}
                         color="bg-slate-100 text-slate-500"
                       >
                         {a.fechaRevision}
                       </Section>
                     )}
                     <div className="flex justify-end pt-1">
-                      <ShareFindingButton title={a.texto} text={shareText} />
+                      <ShareFindingButton title={a.texto} text={shareText} language={language} />
                     </div>
                   </div>
                 ) : (
@@ -209,7 +207,7 @@ export default async function PlanAccionPage() {
                       </p>
                     )}
                     <div className="flex justify-end">
-                      <ShareFindingButton title={a.texto} text={shareText} />
+                      <ShareFindingButton title={a.texto} text={shareText} language={language} />
                     </div>
                   </div>
                 )}
@@ -221,12 +219,7 @@ export default async function PlanAccionPage() {
 
       <div className="mt-6 max-w-3xl bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
         <ShieldCheck size={16} className="text-blue-600 mt-0.5 shrink-0" />
-        <p className="text-xs text-blue-900">
-          Cuando marcamos "Certeza: Potencial" o "No calculable" significa que
-          existe una señal real, pero no suficiente evidencia todavía para
-          convertirla en una cifra exacta — nunca inventamos un número donde
-          no lo hay.
-        </p>
+        <p className="text-xs text-blue-900">{t.footerNote}</p>
       </div>
     </PanelLayout>
   );

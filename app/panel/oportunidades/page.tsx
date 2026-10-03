@@ -1,13 +1,14 @@
-import { getDashboardData } from "@/lib/queries";
+import { getDashboardData, getClientLanguage } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import { ICON_MAP } from "@/lib/icons";
 import ShareFindingButton from "@/components/ShareFindingButton";
 import EconomicImpactCard from "@/components/EconomicImpactCard";
 import { Sparkles, GitBranch } from "lucide-react";
+import { getDictionary } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
-function CertaintyPill({ level }: { level: string }) {
+function CertaintyPill({ level, certeza }: { level: string; certeza: string }) {
   const styles: Record<string, string> = {
     Confirmado: "bg-emerald-50 text-emerald-700 border-emerald-200",
     Medido: "bg-blue-50 text-blue-700 border-blue-200",
@@ -21,44 +22,39 @@ function CertaintyPill({ level }: { level: string }) {
         styles[level] || "bg-slate-100 text-slate-600 border-slate-200"
       }`}
     >
-      Certeza: {level}
+      {certeza}: {level}
     </span>
   );
 }
 
 export default async function OportunidadesPage() {
-  const data = await getDashboardData();
+  const [data, language] = await Promise.all([getDashboardData(), getClientLanguage()]);
+  const t = getDictionary(language).oportunidades;
+  const common = getDictionary(language).common;
 
   if (!data) {
     return (
-      <PanelLayout title="Valor Oculto">
-        <p className="text-sm text-slate-500">
-          Aún no hay un análisis disponible para tu negocio.
-        </p>
+      <PanelLayout title={t.title}>
+        <p className="text-sm text-slate-500">{common.noAnalysisAvailable}</p>
       </PanelLayout>
     );
   }
 
   return (
-    <PanelLayout
-      title="Valor Oculto"
-      subtitle="Oportunidades que VIS IA identificó para que crezcas más"
-    >
+    <PanelLayout title={t.title} subtitle={t.subtitle}>
       {data.oportunidades.length === 0 ? (
-        <p className="text-sm text-slate-500">
-          No se detectaron nuevas oportunidades en el último análisis.
-        </p>
+        <p className="text-sm text-slate-500">{t.empty}</p>
       ) : (
         <div className="space-y-4 max-w-2xl">
           {data.oportunidades.map((o, idx) => {
             const Icon = ICON_MAP[o.icon_key] ?? Sparkles;
             const shareText = [
-              `VALOR OCULTO — ${data.business.name}`,
+              t.shareTitle(data.business.name),
               o.titulo,
               o.descripcion,
-              o.evidencia ? `Evidencia: ${o.evidencia}` : null,
-              o.causaProbable ? `Por qué existe: ${o.causaProbable}` : null,
-              `Potencial: ${o.potencial}${o.nivelCerteza ? ` (Certeza: ${o.nivelCerteza})` : ""}`,
+              o.evidencia ? `${common.evidencia}: ${o.evidencia}` : null,
+              o.causaProbable ? `${t.whyThisExists} ${o.causaProbable}` : null,
+              `${common.potencial}: ${o.potencial}${o.nivelCerteza ? ` (${common.certeza}: ${o.nivelCerteza})` : ""}`,
             ]
               .filter(Boolean)
               .join("\n");
@@ -81,7 +77,7 @@ export default async function OportunidadesPage() {
                   </div>
                   <div className="flex flex-row sm:flex-col items-center sm:items-end gap-3 sm:gap-1.5 shrink-0 pl-14 sm:pl-0">
                     <div className="text-left sm:text-right">
-                      <p className="text-[11px] text-slate-400">Potencial</p>
+                      <p className="text-[11px] text-slate-400">{common.potencial}</p>
                       <p
                         className={`text-sm font-semibold ${
                           o.potencial === "Alto" ? "text-emerald-600" : "text-amber-600"
@@ -90,7 +86,9 @@ export default async function OportunidadesPage() {
                         {o.potencial}
                       </p>
                     </div>
-                    {o.nivelCerteza && <CertaintyPill level={o.nivelCerteza} />}
+                    {o.nivelCerteza && (
+                      <CertaintyPill level={o.nivelCerteza} certeza={common.certeza} />
+                    )}
                   </div>
                 </div>
                 {(o.evidencia || o.causaProbable || o.nivelCerteza) && (
@@ -99,7 +97,7 @@ export default async function OportunidadesPage() {
                       <div className="flex gap-2.5">
                         <GitBranch size={14} className="text-purple-500 mt-0.5 shrink-0" />
                         <p className="text-sm text-slate-600">
-                          <span className="font-medium text-slate-700">Por qué existe esta oportunidad: </span>
+                          <span className="font-medium text-slate-700">{t.whyThisOpportunity} </span>
                           {o.causaProbable}
                         </p>
                       </div>
@@ -115,7 +113,7 @@ export default async function OportunidadesPage() {
                   </div>
                 )}
                 <div className="px-5 pb-4 pt-1 flex justify-end">
-                  <ShareFindingButton title={o.titulo} text={shareText} />
+                  <ShareFindingButton title={o.titulo} text={shareText} language={language} />
                 </div>
               </div>
             );

@@ -1,7 +1,8 @@
-import { getVisualEvidence, getEvidenceRecords, getClientPlan } from "@/lib/queries";
+import { getVisualEvidence, getEvidenceRecords, getClientPlan, getClientLanguage } from "@/lib/queries";
 import { planAtLeast } from "@/lib/plan";
 import PanelLayout from "@/components/PanelLayout";
 import ResponseDraftBox from "@/components/ResponseDraftBox";
+import { getDictionary, type Language } from "@/lib/i18n";
 import {
   Camera,
   Video,
@@ -19,17 +20,18 @@ import type { ImpactLevel, CertaintyLevel } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const IMPACT_STYLES: Record<ImpactLevel, { emoji: string; bg: string; text: string; border: string; label: string }> = {
-  low: { emoji: "🟢", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", label: "BAJO" },
-  medium: { emoji: "🟡", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", label: "MEDIO" },
-  high: { emoji: "🟠", bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200", label: "ALTO" },
-  critical: { emoji: "🔴", bg: "bg-red-50", text: "text-red-700", border: "border-red-200", label: "CRÍTICO" },
+const IMPACT_KEY: Record<ImpactLevel, "BAJO" | "MEDIO" | "ALTO" | "CRÍTICO"> = {
+  low: "BAJO",
+  medium: "MEDIO",
+  high: "ALTO",
+  critical: "CRÍTICO",
 };
 
-const RESOLUTION_LABELS: Record<string, string> = {
-  yes: "Sí",
-  not_evident: "No evidente",
-  unknown: "Desconocido",
+const IMPACT_STYLES: Record<ImpactLevel, { emoji: string; bg: string; text: string; border: string }> = {
+  low: { emoji: "🟢", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+  medium: { emoji: "🟡", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+  high: { emoji: "🟠", bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" },
+  critical: { emoji: "🔴", bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
 };
 
 function CertaintyPill({ level }: { level: CertaintyLevel }) {
@@ -48,43 +50,41 @@ function CertaintyPill({ level }: { level: CertaintyLevel }) {
 }
 
 export default async function EvidenciaPage() {
-  const [evidence, records, plan] = await Promise.all([
+  const [evidence, records, plan, language] = await Promise.all([
     getVisualEvidence(),
     getEvidenceRecords(),
     getClientPlan(),
+    getClientLanguage(),
   ]);
   const canGenerateResponses = planAtLeast(plan, "pro");
+  const t = getDictionary(language).evidencia;
+  const RESOLUTION_LABELS: Record<string, string> = {
+    yes: t.yes,
+    not_evident: t.notEvident,
+    unknown: t.unknown,
+  };
 
   const isEmpty = evidence.length === 0 && records.length === 0;
 
   if (isEmpty) {
     return (
-      <PanelLayout title="Evidencia Visual">
+      <PanelLayout title={t.title}>
         <div className="bg-white rounded-xl border border-slate-200 p-8 max-w-lg text-center">
           <Camera className="text-slate-400 mx-auto mb-3" size={28} />
-          <p className="text-sm font-medium text-slate-800">
-            Aún no hay evidencia cargada
-          </p>
-          <p className="text-sm text-slate-500 mt-1">
-            Cuando VIS IA identifique reseñas, fotos o videos relevantes en
-            fuentes públicas, aparecerán aquí — con enlace directo a la
-            fuente original, sin copiar el archivo.
-          </p>
+          <p className="text-sm font-medium text-slate-800">{t.emptyTitle}</p>
+          <p className="text-sm text-slate-500 mt-1">{t.emptyBody}</p>
         </div>
       </PanelLayout>
     );
   }
 
   return (
-    <PanelLayout
-      title="Evidencia Visual"
-      subtitle="Referencia y análisis, con enlace directo a la fuente pública original — VIS IA no descarga ni almacena el contenido"
-    >
+    <PanelLayout title={t.title} subtitle={t.subtitle}>
       {/* VIS Evidence Records — reseñas completas y trazables */}
       {records.length > 0 && (
         <div className="space-y-5 max-w-2xl mb-8">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            VIS Evidence
+            {t.visEvidence}
           </p>
           {records.map((r, idx) => (
             <div key={idx} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -105,7 +105,7 @@ export default async function EvidenciaPage() {
                 <div className="flex flex-wrap gap-2 text-xs">
                   <span className="flex items-center gap-1 bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
                     <Clock size={11} />
-                    {r.temporalStatus === "historical" ? "Evidencia histórica" : "Evidencia reciente"}
+                    {r.temporalStatus === "historical" ? t.historicalEvidence : t.recentEvidence}
                     {r.reviewDateLabel ? ` — ${r.reviewDateLabel}` : ""}
                   </span>
                   <span
@@ -116,11 +116,11 @@ export default async function EvidenciaPage() {
                     }`}
                   >
                     <Eye size={11} />
-                    Exposición pública persistente — {r.publicPersistence ? "Sí" : "No"}
+                    {t.persistentPublicExposure} — {r.publicPersistence ? t.yes : t.no}
                   </span>
                   <span className="flex items-center gap-1 bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
                     <MessageCircle size={11} />
-                    Respuesta del propietario — {r.ownerResponse ? "Sí" : "No"}
+                    {t.ownerResponse} — {r.ownerResponse ? t.yes : t.no}
                   </span>
                   <span
                     className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${
@@ -130,7 +130,7 @@ export default async function EvidenciaPage() {
                     }`}
                   >
                     <CheckCircle2 size={11} />
-                    Resolución demostrada — {RESOLUTION_LABELS[r.resolutionDemonstrated]}
+                    {t.resolutionDemonstrated} — {RESOLUTION_LABELS[r.resolutionDemonstrated]}
                   </span>
                 </div>
               </div>
@@ -138,7 +138,7 @@ export default async function EvidenciaPage() {
               {r.issues.length > 0 && (
                 <div className="p-5 border-b border-slate-100">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
-                    Issues Detected
+                    {t.issuesDetected}
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {r.issues.map((issue, i) => (
@@ -152,22 +152,20 @@ export default async function EvidenciaPage() {
 
               <div className="p-5 border-b border-slate-100">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
-                  Análisis VIS
+                  {t.visAnalysis}
                 </p>
                 <p className="text-sm text-slate-700 leading-relaxed">{r.analysis}</p>
                 {r.requiresHumanReview && (
                   <div className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg p-3 mt-3">
                     <AlertOctagon size={14} className="text-slate-500 mt-0.5 shrink-0" />
-                    <p className="text-xs text-slate-600">
-                      Requiere revisión humana antes de tomarse como concluyente.
-                    </p>
+                    <p className="text-xs text-slate-600">{t.requiresHumanReview}</p>
                   </div>
                 )}
               </div>
 
               <div className="p-5 border-b border-slate-100">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
-                  Responder a esta reseña
+                  {t.respondToReview}
                 </p>
                 <ResponseDraftBox
                   evidenceRecordId={r.id}
@@ -179,7 +177,7 @@ export default async function EvidenciaPage() {
               {r.photos.length > 0 && (
                 <div className="p-5 border-b border-slate-100">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
-                    Visual Evidence
+                    {t.visualEvidence}
                   </p>
                   <div className="space-y-3">
                     {r.photos.map((p, i) => {
@@ -192,7 +190,7 @@ export default async function EvidenciaPage() {
                               <TypeIcon size={12} /> {p.description}
                             </span>
                             <span className={`text-[10px] font-semibold ${style.text}`}>
-                              {style.emoji} {style.label}
+                              {style.emoji} {t.impactLevels[IMPACT_KEY[p.impact]]}
                             </span>
                           </div>
                           <p className="text-xs text-slate-500 mb-2">{p.analysis}</p>
@@ -202,7 +200,7 @@ export default async function EvidenciaPage() {
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700"
                           >
-                            Ver evidencia original <ExternalLink size={12} />
+                            {t.seeOriginalEvidence} <ExternalLink size={12} />
                           </a>
                         </div>
                       );
@@ -218,7 +216,7 @@ export default async function EvidenciaPage() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
                 >
-                  Ver reseña original <ExternalLink size={14} />
+                  {t.seeOriginalReview} <ExternalLink size={14} />
                 </a>
                 {r.author && (
                   <span className="text-xs text-slate-400">— {r.author}</span>
@@ -234,7 +232,7 @@ export default async function EvidenciaPage() {
         <div className="space-y-4 max-w-2xl">
           {records.length > 0 && (
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Otra evidencia visual
+              {t.otherVisualEvidence}
             </p>
           )}
           {evidence.map((e, idx) => {
@@ -254,7 +252,7 @@ export default async function EvidenciaPage() {
                     <span
                       className={`text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${style.bg} ${style.text} border ${style.border}`}
                     >
-                      Impacto: {style.label}
+                      {t.impactLabel} {t.impactLevels[IMPACT_KEY[e.impact]]}
                     </span>
                   </div>
 
@@ -264,17 +262,17 @@ export default async function EvidenciaPage() {
 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 mb-3">
                     <span className="flex items-center gap-1">
-                      <TypeIcon size={12} /> {e.evidenceType === "video" ? "Video" : "Foto"}
+                      <TypeIcon size={12} /> {e.evidenceType === "video" ? t.video : t.photo}
                     </span>
-                    <span>Fuente: {e.source}</span>
-                    <span>Categoría: {e.category}</span>
+                    <span>{t.source} {e.source}</span>
+                    <span>{t.category} {e.category}</span>
                     {e.verified ? (
                       <span className="flex items-center gap-1 text-emerald-600">
-                        <ShieldCheck size={12} /> Verificado
+                        <ShieldCheck size={12} /> {t.verified}
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 text-slate-400">
-                        <ShieldAlert size={12} /> Sin verificar
+                        <ShieldAlert size={12} /> {t.unverified}
                       </span>
                     )}
                   </div>
@@ -282,10 +280,7 @@ export default async function EvidenciaPage() {
                   {e.requiresHumanReview && (
                     <div className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3">
                       <AlertOctagon size={14} className="text-slate-500 mt-0.5 shrink-0" />
-                      <p className="text-xs text-slate-600">
-                        La interpretación definitiva de esta evidencia requiere
-                        revisión humana antes de tomarse como concluyente.
-                      </p>
+                      <p className="text-xs text-slate-600">{t.requiresHumanReviewLong}</p>
                     </div>
                   )}
 
@@ -295,7 +290,7 @@ export default async function EvidenciaPage() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
                   >
-                    Ver evidencia original <ExternalLink size={14} />
+                    {t.seeOriginalEvidence} <ExternalLink size={14} />
                   </a>
                 </div>
               </div>

@@ -2,15 +2,19 @@
 
 import { useState } from "react";
 import { Share2, Check } from "lucide-react";
+import { getDictionary, type Language } from "@/lib/i18n";
 
 export default function ShareFindingButton({
   title,
   text,
+  language = "es",
 }: {
   title: string;
   text: string;
+  language?: Language;
 }) {
   const [copied, setCopied] = useState(false);
+  const t = getDictionary(language).shareButton;
 
   async function handleShare() {
     if (typeof navigator !== "undefined" && navigator.share) {
@@ -36,17 +40,17 @@ export default function ShareFindingButton({
     <button
       onClick={handleShare}
       className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 shrink-0"
-      title="Compartir este hallazgo"
+      title={t.shareThisFinding}
     >
       {copied ? (
         <>
           <Check size={13} className="text-emerald-600" />
-          <span className="text-emerald-600">Copiado</span>
+          <span className="text-emerald-600">{t.copied}</span>
         </>
       ) : (
         <>
           <Share2 size={13} />
-          <span className="hidden sm:inline">Compartir</span>
+          <span className="hidden sm:inline">{t.share}</span>
         </>
       )}
     </button>

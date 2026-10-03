@@ -25,7 +25,7 @@ import EconomicImpactSummary from "@/components/EconomicImpactSummary";
 import { planAtLeast, PLAN_LABELS, type PlanTier } from "@/lib/plan";
 import { getVisStatusPresentation } from "@/lib/visStatus";
 import type { DashboardData } from "@/lib/types";
-import type { Language } from "@/lib/i18n";
+import { getDictionary, type Language } from "@/lib/i18n";
 
 /**
  * VisIaPanelInicio
@@ -89,6 +89,7 @@ export default function VisIaPanelInicio({
 }) {
   const canCompare = planAtLeast(plan, "pro");
   const statusPresentation = getVisStatusPresentation(d.visScore.status);
+  const t = getDictionary(language).home;
 
   function downloadReport() {
     const lines = [
@@ -617,7 +618,7 @@ export default function VisIaPanelInicio({
 
           <div className="flex items-center justify-between lg:justify-end gap-3 lg:gap-6 flex-wrap">
             <div className="text-left lg:text-right order-3 lg:order-1 w-full lg:w-auto">
-              <p className="text-xs text-slate-400">Último análisis</p>
+              <p className="text-xs text-slate-400">{t.lastAnalysis}</p>
               <p className="text-sm font-medium text-slate-700">{d.lastAnalysis}</p>
             </div>
             <button
@@ -625,9 +626,7 @@ export default function VisIaPanelInicio({
               className="order-1 lg:order-2 flex items-center gap-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg px-3 py-2 hover:bg-slate-50 whitespace-nowrap"
             >
               <Download size={15} />{" "}
-              <span className="hidden sm:inline">
-                Descargar reporte{canCompare ? " (PDF)" : ""}
-              </span>
+              <span className="hidden sm:inline">{t.downloadReport(canCompare)}</span>
             </button>
             <div className="order-2 lg:order-3">
               {canCompare && <NotificationsBell />}
@@ -636,7 +635,7 @@ export default function VisIaPanelInicio({
               <div className="w-9 h-9 rounded-full bg-slate-200 shrink-0" />
               <div className="min-w-0">
                 <p className="text-sm font-medium text-slate-800 truncate">
-                  Hola, {d.user.name}
+                  {t.greeting(d.user.name)}
                 </p>
                 <p className="text-xs text-slate-400">{d.user.role}</p>
               </div>
@@ -649,7 +648,7 @@ export default function VisIaPanelInicio({
           {d.resumenEjecutivo && (
             <section className="bg-slate-900 text-white rounded-2xl p-5 lg:p-6">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">
-                Resumen ejecutivo
+                {language === "en" ? "Executive summary" : "Resumen ejecutivo"}
               </p>
               <p className="text-sm lg:text-base leading-relaxed text-slate-100">
                 {d.resumenEjecutivo}
@@ -668,7 +667,7 @@ export default function VisIaPanelInicio({
                 VIS IA INTELLIGENCE
               </p>
               <p className="text-sm text-slate-500 mb-4">
-                Tu negocio está actualmente en:
+                {language === "en" ? "Your business is currently:" : "Tu negocio está actualmente en:"}
               </p>
               <div className="flex items-center gap-5">
                 {d.visScore.current !== null ? (
@@ -688,12 +687,12 @@ export default function VisIaPanelInicio({
                 ) : (
                   <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
                     <span className="bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full inline-block mb-2">
-                      PENDIENTE
+                      {t.visScorePendingBadge}
                     </span>
                     <p className="text-sm text-amber-900">
                       {onboardingCompleted
-                        ? "Ya recibimos tus respuestas a las 15 preguntas — VIS IA está terminando de calcular tu VIS Score con esa información."
-                        : "El VIS Score se calcula cuando se completen las 15 preguntas — el análisis externo ya está listo, falta tu información interna."}
+                        ? t.visScorePendingOnboardingDone
+                        : t.visScorePendingOnboardingMissing}
                     </p>
                   </div>
                 )}
@@ -703,7 +702,7 @@ export default function VisIaPanelInicio({
             {/* Detected */}
             <div>
               <p className="text-slate-700 font-semibold text-sm mb-4">
-                VIS IA detectó:
+                {t.visIaDetected}
               </p>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -712,10 +711,10 @@ export default function VisIaPanelInicio({
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-800">
-                      {d.detected.perdidas} PÉRDIDAS INVISIBLES
+                      {t.invisibleLosses(d.detected.perdidas)}
                     </p>
                     <p className="text-xs text-slate-500">
-                      Están afectando tus resultados
+                      {t.invisibleLossesSubtitle}
                     </p>
                   </div>
                 </div>
@@ -725,10 +724,10 @@ export default function VisIaPanelInicio({
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-800">
-                      {d.detected.areas} ÁREAS QUE REQUIEREN ATENCIÓN
+                      {t.areasNeedingAttention(d.detected.areas)}
                     </p>
                     <p className="text-xs text-slate-500">
-                      Podrían convertirse en problemas
+                      {t.areasNeedingAttentionSubtitle}
                     </p>
                   </div>
                 </div>
@@ -738,10 +737,10 @@ export default function VisIaPanelInicio({
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-800">
-                      {d.detected.oportunidades} OPORTUNIDADES DE VALOR OCULTO
+                      {t.hiddenValueOpportunities(d.detected.oportunidades)}
                     </p>
                     <p className="text-xs text-slate-500">
-                      Puedes aprovechar para crecer más
+                      {t.hiddenValueOpportunitiesSubtitle}
                     </p>
                   </div>
                 </div>
@@ -756,7 +755,7 @@ export default function VisIaPanelInicio({
                     <CheckSquare className="text-emerald-600" size={16} />
                   </div>
                   <p className="text-emerald-700 font-semibold text-xs tracking-wide">
-                    ACCIÓN RECOMENDADA #1
+                    {t.recommendedActionNumber1}
                   </p>
                 </div>
                 <p className="text-sm font-semibold text-slate-800 mb-1">
@@ -768,7 +767,7 @@ export default function VisIaPanelInicio({
                 href="/panel/plan-accion"
                 className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg py-2.5 flex items-center justify-center gap-1"
               >
-                Ver detalle y plan <ChevronRight size={15} />
+                {t.seeDetailAndPlan} <ChevronRight size={15} />
               </Link>
             </div>
           </section>
@@ -779,7 +778,7 @@ export default function VisIaPanelInicio({
               <div className="flex items-center gap-2">
                 <TrendingUp size={16} className="text-blue-600" />
                 <h2 className="text-sm font-semibold text-slate-800">
-                  ¿Qué cambió desde tu último análisis?
+                  {t.whatChangedTitle}
                 </h2>
               </div>
               {canCompare ? (
@@ -787,11 +786,11 @@ export default function VisIaPanelInicio({
                   href="/panel/comparacion"
                   className="text-xs text-blue-600 font-medium flex items-center gap-1"
                 >
-                  Ver comparación completa <ChevronRight size={13} />
+                  {t.seeFullComparison} <ChevronRight size={13} />
                 </Link>
               ) : (
                 <span className="text-xs text-slate-400 flex items-center gap-1">
-                  Comparación completa — disponible en PRO
+                  {t.fullComparisonProOnly}
                 </span>
               )}
             </div>
@@ -834,7 +833,7 @@ export default function VisIaPanelInicio({
             {/* Pérdidas invisibles */}
             <div className="bg-white rounded-xl border border-slate-200 p-5">
               <h3 className="text-sm font-semibold text-red-600 mb-4">
-                PÉRDIDAS INVISIBLES PRINCIPALES
+                {t.mainInvisibleLosses}
               </h3>
               <div className="space-y-4">
                 {d.perdidas.map((p, idx) => {
@@ -851,7 +850,7 @@ export default function VisIaPanelInicio({
                         <p className="text-xs text-slate-500">{p.descripcion}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-[11px] text-slate-400">Impacto</p>
+                        <p className="text-[11px] text-slate-400">{t.impacto}</p>
                         <p className="text-xs font-semibold text-red-600">
                           {p.impacto}
                         </p>
@@ -864,14 +863,14 @@ export default function VisIaPanelInicio({
                 href="/panel/perdidas"
                 className="mt-5 text-sm text-red-600 font-medium flex items-center gap-1"
               >
-                Ver todas las pérdidas <ChevronRight size={14} />
+                {t.seeAllLosses} <ChevronRight size={14} />
               </Link>
             </div>
 
             {/* Oportunidades de valor oculto */}
             <div className="bg-white rounded-xl border border-slate-200 p-5">
               <h3 className="text-sm font-semibold text-emerald-600 mb-4">
-                OPORTUNIDADES DE VALOR OCULTO
+                {t.hiddenValueOpportunitiesTitle}
               </h3>
               <div className="space-y-4">
                 {d.oportunidades.map((o, idx) => {
@@ -888,7 +887,7 @@ export default function VisIaPanelInicio({
                         <p className="text-xs text-slate-500">{o.descripcion}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-[11px] text-slate-400">Potencial</p>
+                        <p className="text-[11px] text-slate-400">{t.potencial}</p>
                         <p
                           className={`text-xs font-semibold ${
                             o.potencial === "Alto"
@@ -907,14 +906,14 @@ export default function VisIaPanelInicio({
                 href="/panel/oportunidades"
                 className="mt-5 text-sm text-emerald-600 font-medium flex items-center gap-1"
               >
-                Ver todas las oportunidades <ChevronRight size={14} />
+                {t.seeAllOpportunities} <ChevronRight size={14} />
               </Link>
             </div>
 
             {/* Próximas acciones prioritarias */}
             <div className="bg-white rounded-xl border border-slate-200 p-5">
               <h3 className="text-sm font-semibold text-blue-600 mb-4">
-                PRÓXIMAS ACCIONES PRIORITARIAS
+                {t.nextPriorityActions}
               </h3>
               <div className="space-y-4">
                 {d.acciones.map((a, idx) => (
@@ -931,7 +930,7 @@ export default function VisIaPanelInicio({
                 href="/panel/plan-accion"
                 className="mt-5 text-sm text-blue-600 font-medium flex items-center gap-1"
               >
-                Ver plan de acción completo <ChevronRight size={14} />
+                {t.seeFullActionPlan} <ChevronRight size={14} />
               </Link>
             </div>
           </section>
@@ -944,18 +943,17 @@ export default function VisIaPanelInicio({
               </div>
               <div>
                 <p className="text-sm font-semibold text-blue-900">
-                  VIS IA está vigilando tu negocio 24/7
+                  {t.watchingBusiness}
                 </p>
                 <p className="text-xs text-blue-700/80 mt-0.5">
-                  Analizamos, detectamos y te mostramos lo que realmente
-                  importa para que tomes mejores decisiones.
+                  {t.watchingBusinessBody}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right hidden md:block">
                 <p className="text-xs text-blue-700/70 flex items-center gap-1 justify-end">
-                  <Calendar size={12} /> Próximo análisis automático
+                  <Calendar size={12} /> {t.nextAutomaticAnalysis}
                 </p>
                 <p className="text-sm font-semibold text-blue-900">
                   {d.nextAnalysis}
@@ -965,7 +963,7 @@ export default function VisIaPanelInicio({
                 href="/panel/reportes"
                 className="flex items-center gap-2 text-sm font-medium text-blue-700 bg-white border border-blue-200 rounded-lg px-4 py-2.5"
               >
-                <FileText size={15} /> Ver todos los reportes{" "}
+                <FileText size={15} /> {t.seeAllReports}{" "}
                 <ChevronRight size={14} />
               </Link>
             </div>
