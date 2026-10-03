@@ -1,10 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, PRICE_TO_PLAN } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { PlanTier } from "@/lib/plan";
+import { PLAN_LABELS, type PlanTier } from "@/lib/plan";
 import type Stripe from "stripe";
 
 export const runtime = "nodejs";
+
+/**
+ * Notificación en la campanita del panel — la única señal que el cliente
+ * recibe en el momento de que su pago se procesó, ya que no hay ningún
+ * servicio de correo conectado todavía (eso queda pendiente aparte). Se
+ * dispara solo desde checkout.session.completed (primera vez que se
+ * activa/sube un plan vía pago), nunca desde customer.subscription.updated
+ * — ese evento también dispara en renovaciones mensuales normales y en
+ * la baja de plan programada que ya tenía su propio aviso en el panel,
+ * así que insertar ahí duplicaría o inflaría la campanita sin motivo.
+ *
+ * Mensaje en el idioma fijo del cliente (`clients.language`), igual que
+ * el resto del panel — nunca en el idioma de quien pagó.
+ */
+async function notifyPlanActivated(
+  supabaseAdmin: ReturnType<typeof createAdminClient>,
+  clientId: string,
+  plan: PlanTier
+) {
+  const { data: clientRow } = await supabaseAdmin
+    .from("clients")
+    .select("language")
+    .eq("id", clientId)
+    .maybeSingle();
+
+  const language = clientRow?.language === "en" ? "en" : "es";
+  const planLabel = PLAN_LABELS[plan];
+
+  const copy =
+    language === "en"
+      ? {
+          title: "Payment received",
+          message: `Your payment went through and your ${planLabel} plan is now active. Refresh your panel to see everything included.`,
+        }
+      : {
+          title: "Pago recibido",
+          message: `Tu pago se procesó correctamente y tu plan ${planLabel} ya está activo. Actualiza tu panel para ver todo lo que incluye.`,
+        };
+
+  const { error } = await supabaseAdmin.from("notifications").insert({
+    client_id: clientId,
+    title: copy.title,
+    message: copy.message,
+  });
+
+  if (error) {
+    console.error("Error creando notificación de pago recibido:", error);
+  }
+}
 
 /**
  * Deriva el plan (diagnostic/pro/intelligence) del primer price activo de
@@ -156,6 +205,11 @@ export async function POST(request: NextRequest) {
             session.subscription as string
           );
           await syncSubscriptionToSupabase(subscription, clientId);
+
+          const plan = planFromSubscription(subscription);
+          if (plan) {
+            await notifyPlanActivated(createAdminClient(), clientId, plan);
+          }
           break;
         }
 
@@ -186,7 +240,10 @@ export async function POST(request: NextRequest) {
 
         if (error) {
           console.error("Error actualizando el plan del cliente:", error);
+          break;
         }
+
+        await notifyPlanActivated(supabaseAdmin, clientId, plan);
         break;
       }
 
