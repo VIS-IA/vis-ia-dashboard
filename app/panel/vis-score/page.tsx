@@ -7,6 +7,7 @@ import {
   getExperienceDetail,
   getCompetitors,
   getOtherReputations,
+  getClientLanguage,
   type ReportSummary,
 } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
@@ -15,12 +16,13 @@ import ScoreTimelineChart from "@/components/ScoreTimelineChart";
 import UpgradeNotice from "@/components/UpgradeNotice";
 import { planAtLeast } from "@/lib/plan";
 import { getVisStatusPresentation } from "@/lib/visStatus";
+import { getDictionary } from "@/lib/i18n";
 import { ArrowUp, Star, Users, Globe, BarChart3, AlertTriangle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function VisScorePage() {
-  const [data, onboarding, history, plan, reputation, experience, competitors, otherReputations] =
+  const [data, onboarding, history, plan, reputation, experience, competitors, otherReputations, language] =
     await Promise.all([
       getDashboardData(),
       getOnboardingStatus(),
@@ -30,29 +32,28 @@ export default async function VisScorePage() {
       getExperienceDetail(),
       getCompetitors(),
       getOtherReputations(),
+      getClientLanguage(),
     ]);
+  const t = getDictionary(language).visScore;
+  const common = getDictionary(language).common;
 
   if (!data) {
     return (
-      <PanelLayout title="VIS Score">
-        <p className="text-sm text-slate-500">
-          Aún no hay un análisis disponible para tu negocio.
-        </p>
+      <PanelLayout title={t.title}>
+        <p className="text-sm text-slate-500">{t.noAnalysis}</p>
       </PanelLayout>
     );
   }
 
   if (data.visScore.current === null) {
     return (
-      <PanelLayout title="VIS Score" subtitle={`Último análisis: ${data.lastAnalysis}`}>
+      <PanelLayout title={t.title} subtitle={t.lastAnalysis(data.lastAnalysis)}>
         <div className="bg-amber-50 border border-amber-100 rounded-2xl p-8 max-w-xl">
           <span className="bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full inline-block mb-3">
-            PENDIENTE
+            {t.pendingBadge}
           </span>
           <p className="text-sm text-amber-900">
-            {onboarding.completed
-              ? "Ya recibimos tus respuestas a las 15 preguntas — VIS IA está terminando de calcular tu VIS Score con esa información."
-              : "El análisis externo de tu negocio ya está listo, pero el VIS Score todavía no se calcula — falta que completes las 15 preguntas internas. VIS IA no asigna un puntaje sin esa información, para no basarlo en datos incompletos."}
+            {onboarding.completed ? t.pendingOnboardingDone : t.pendingOnboardingMissing}
           </p>
         </div>
       </PanelLayout>
@@ -78,10 +79,7 @@ export default async function VisScorePage() {
   ];
 
   return (
-    <PanelLayout
-      title="VIS Score"
-      subtitle={`Último análisis: ${data.lastAnalysis}`}
-    >
+    <PanelLayout title={t.title} subtitle={t.lastAnalysis(data.lastAnalysis)}>
       <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-xl flex items-center gap-8 mb-6">
         <ScoreGauge score={data.visScore.current} size={190} />
         <div>
@@ -95,9 +93,7 @@ export default async function VisScorePage() {
           </p>
           {data.visScore.previous !== null && data.visScore.delta !== null && (
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-slate-500">
-                Puntaje anterior: {data.visScore.previous}/100
-              </span>
+              <span className="text-slate-500">{t.previousScore(data.visScore.previous)}</span>
               <span className="font-semibold text-emerald-600 flex items-center gap-1">
                 <ArrowUp size={14} />
                 {data.visScore.delta > 0 ? "+" : ""}
@@ -111,7 +107,7 @@ export default async function VisScorePage() {
       {/* ¿Por qué este Score? */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-2xl mb-6">
         <p className="text-sm font-semibold text-slate-800 mb-4">
-          ¿Por qué este Score?
+          {t.whyThisScore}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex items-start gap-3">
@@ -119,11 +115,11 @@ export default async function VisScorePage() {
               <Star size={14} className="text-amber-500" />
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500">Reputación</p>
+              <p className="text-xs font-medium text-slate-500">{t.reputation}</p>
               <p className="text-sm text-slate-800">
                 {reputation
-                  ? `${reputation.avgRating.toFixed(1)}/5 en Google (${reputation.totalReviews} reseñas)`
-                  : "No calculable con la información disponible"}
+                  ? t.ratingOnGoogle(reputation.avgRating.toFixed(1), reputation.totalReviews)
+                  : common.notCalculable}
               </p>
             </div>
           </div>
@@ -133,11 +129,11 @@ export default async function VisScorePage() {
               <Users size={14} className="text-purple-500" />
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500">Experiencia del Cliente</p>
+              <p className="text-xs font-medium text-slate-500">{t.customerExperience}</p>
               <p className="text-sm text-slate-800">
                 {experience && experience.signals.length > 0
-                  ? `${experience.signals.length} señal${experience.signals.length > 1 ? "es" : ""} analizada${experience.signals.length > 1 ? "s" : ""}`
-                  : "No calculable con la información disponible"}
+                  ? t.signalsAnalyzed(experience.signals.length)
+                  : common.notCalculable}
               </p>
             </div>
           </div>
@@ -147,11 +143,11 @@ export default async function VisScorePage() {
               <Globe size={14} className="text-blue-500" />
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500">Presencia Digital</p>
+              <p className="text-xs font-medium text-slate-500">{t.digitalPresence}</p>
               <p className="text-sm text-slate-800">
                 {platformsConfirmed.length > 0
-                  ? `Perfil confirmado en ${platformsConfirmed.length} plataforma${platformsConfirmed.length > 1 ? "s" : ""} (${platformsConfirmed.join(", ")})`
-                  : "No calculable con la información disponible"}
+                  ? t.confirmedOnPlatforms(platformsConfirmed.length, platformsConfirmed.join(", "))
+                  : common.notCalculable}
               </p>
             </div>
           </div>
@@ -161,11 +157,11 @@ export default async function VisScorePage() {
               <BarChart3 size={14} className="text-emerald-500" />
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500">Competitividad</p>
+              <p className="text-xs font-medium text-slate-500">{t.competitiveness}</p>
               <p className="text-sm text-slate-800">
                 {competitors.length > 0
-                  ? `${competitors.length} competidor${competitors.length > 1 ? "es" : ""} comparado${competitors.length > 1 ? "s" : ""}`
-                  : "No calculable con la información disponible"}
+                  ? t.competitorsCompared(competitors.length)
+                  : common.notCalculable}
               </p>
             </div>
           </div>
@@ -175,11 +171,11 @@ export default async function VisScorePage() {
               <AlertTriangle size={14} className="text-red-500" />
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500">Fricciones detectadas</p>
+              <p className="text-xs font-medium text-slate-500">{t.frictionsDetected}</p>
               <p className="text-sm text-slate-800">
                 {data.perdidas.length > 0
-                  ? `${data.perdidas.length} pérdida${data.perdidas.length > 1 ? "s" : ""} invisible${data.perdidas.length > 1 ? "s" : ""} identificada${data.perdidas.length > 1 ? "s" : ""}`
-                  : "No se detectaron fricciones en el último análisis"}
+                  ? t.invisibleLossesIdentified(data.perdidas.length)
+                  : t.noFrictionsDetected}
               </p>
             </div>
           </div>
@@ -192,16 +188,18 @@ export default async function VisScorePage() {
         reputation?.responseManagementSignal) && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-2xl mb-6">
           <p className="text-sm font-semibold text-slate-800 mb-4">
-            Principales señales VIS
+            {t.mainVisSignals}
           </p>
           <div className="space-y-3">
             {reputation?.responseManagementSignal && (
               <div className="flex items-start gap-2.5">
                 <span className="text-base leading-none">🔴</span>
                 <p className="text-sm text-slate-700">
-                  <span className="font-medium">Fricción:</span> abandono de gestión
-                  de reputación — la tasa de respuesta a reseñas cayó de{" "}
-                  {reputation.responseRatePercentPrevious}% a {reputation.responseRatePercent}%
+                  <span className="font-medium">{t.frictionLabel}</span>{" "}
+                  {t.frictionResponseManagement(
+                    reputation.responseRatePercentPrevious ?? 0,
+                    reputation.responseRatePercent ?? 0
+                  )}
                 </p>
               </div>
             )}
@@ -209,7 +207,7 @@ export default async function VisScorePage() {
               <div key={`p-${idx}`} className="flex items-start gap-2.5">
                 <span className="text-base leading-none">🔴</span>
                 <p className="text-sm text-slate-700">
-                  <span className="font-medium">Fricción:</span> {p.titulo}
+                  <span className="font-medium">{t.frictionLabel}</span> {p.titulo}
                 </p>
               </div>
             ))}
@@ -217,7 +215,7 @@ export default async function VisScorePage() {
               <div key={`p2-${idx}`} className="flex items-start gap-2.5">
                 <span className="text-base leading-none">🟠</span>
                 <p className="text-sm text-slate-700">
-                  <span className="font-medium">Brecha:</span> {p.titulo}
+                  <span className="font-medium">{t.gapLabel}</span> {p.titulo}
                 </p>
               </div>
             ))}
@@ -225,7 +223,7 @@ export default async function VisScorePage() {
               <div key={`o-${idx}`} className="flex items-start gap-2.5">
                 <span className="text-base leading-none">🟢</span>
                 <p className="text-sm text-slate-700">
-                  <span className="font-medium">Fortaleza:</span> {o.titulo}
+                  <span className="font-medium">{t.strengthLabel}</span> {o.titulo}
                 </p>
               </div>
             ))}
@@ -234,20 +232,16 @@ export default async function VisScorePage() {
       )}
 
       {!planAtLeast(plan, "pro") ? (
-        <UpgradeNotice feature="Ver la evolución de tu VIS Score en el tiempo" minPlan="pro" />
+        <UpgradeNotice feature={t.evolutionUpgradeFeature} minPlan="pro" language={language} />
       ) : scoredHistory.length >= 2 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-2xl">
           <p className="text-sm font-semibold text-slate-800 mb-4">
-            Evolución del VIS Score
+            {t.evolutionTitle}
           </p>
           <ScoreTimelineChart points={scoredHistory} />
         </div>
       ) : (
-        <p className="text-xs text-slate-400 max-w-xl">
-          El historial completo de tu VIS Score a través del tiempo aparecerá
-          aquí a medida que se publiquen más reportes. Puedes ver todos tus
-          reportes anteriores en la sección "Reportes".
-        </p>
+        <p className="text-xs text-slate-400 max-w-xl">{t.evolutionEmpty}</p>
       )}
     </PanelLayout>
   );
