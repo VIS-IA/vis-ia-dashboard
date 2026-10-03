@@ -76,7 +76,7 @@ const es: Dictionary = {
       "Tu cuenta está activa. VIS IA está preparando tu primer reporte — mientras tanto, ayúdanos respondiendo las 15 preguntas sobre tu negocio; esa información es parte del análisis.",
     answerQuestions: "Responder las 15 preguntas",
     alreadyAnsweredThanks:
-      "Ya respondiste las 15 preguntas — gracias. Te avisaremos cuando tu primer reporte esté listo.",
+      "Ya respondiste las 15 preguntas — gracias. Tu reporte completo estará disponible en tu panel en las próximas 24 horas.",
     missingQuestionsBanner:
       "Nos faltan tus respuestas a las 15 preguntas sobre tu negocio — tómate unos minutos para completarlas",
   },
@@ -123,7 +123,7 @@ const en: Dictionary = {
       "Your account is active. VIS IA is preparing your first report — in the meantime, help us by answering the 15 questions about your business; that information is part of the analysis.",
     answerQuestions: "Answer the 15 questions",
     alreadyAnsweredThanks:
-      "You already answered the 15 questions — thank you. We'll let you know as soon as your first report is ready.",
+      "You already answered the 15 questions — thank you. Your full report will be available in your panel within the next 24 hours.",
     missingQuestionsBanner:
       "We're still missing your answers to the 15 questions about your business — take a few minutes to complete them",
   },

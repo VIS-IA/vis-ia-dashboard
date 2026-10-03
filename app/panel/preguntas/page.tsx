@@ -52,8 +52,8 @@ export default async function PreguntasPage() {
         <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-3 max-w-2xl mb-6">
           <CheckCircle2 className="text-emerald-600 shrink-0" size={20} />
           <p className="text-sm text-emerald-800">
-            Tus respuestas ya fueron recibidas y VIS IA las está usando como
-            contexto para tu análisis.
+            Tus respuestas ya fueron recibidas. Tu reporte completo estará
+            disponible en tu panel en las próximas 24 horas.
           </p>
         </div>
         <div className="space-y-3 max-w-2xl">
