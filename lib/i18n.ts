@@ -264,7 +264,12 @@ export interface Dictionary {
     overallAssessment: string;
     specificFindings: string;
     evidencia: string;
-    sampleFindings: { titulo: string; descripcion: string; impacto: string; categoria: string }[];
+    sampleFindings: {
+      titulo: string;
+      descripcion: string;
+      impacto: "Alto" | "Media" | "Baja";
+      categoria: string;
+    }[];
   };
   redesSociales: {
     title: string;
@@ -288,11 +293,12 @@ export interface Dictionary {
       handle: string;
       lastPostLabel: string;
       postingFrequencyLabel: string;
+      respondsToComments: false;
     };
     sampleFindings: {
       titulo: string;
       descripcion: string;
-      impacto: string;
+      impacto: "Alto" | "Media" | "Baja";
       categoria: string;
       accionRecomendada: string;
       porQue: string;
@@ -750,6 +756,7 @@ const es: Dictionary = {
       handle: "@negocio_ejemplo",
       lastPostLabel: "Hace 6 semanas",
       postingFrequencyLabel: "~1 publicación al mes",
+      respondsToComments: false,
     },
     sampleFindings: [
       {
@@ -1232,14 +1239,14 @@ const en: Dictionary = {
         titulo: "The posted hours don't match Google",
         descripcion:
           "The website says they close at 6pm, but the Google Business Profile says 8pm — this inconsistency creates distrust and lost calls.",
-        impacto: "High",
+        impacto: "Alto",
         categoria: "Contact information",
       },
       {
         titulo: "No direct booking button",
         descripcion:
           "Visitors have to call by phone to book — there's no way to book online from the website itself.",
-        impacto: "Medium",
+        impacto: "Media",
         categoria: "Online booking",
       },
     ],
@@ -1266,13 +1273,14 @@ const en: Dictionary = {
       handle: "@sample_business",
       lastPostLabel: "6 weeks ago",
       postingFrequencyLabel: "~1 post per month",
+      respondsToComments: false,
     },
     sampleFindings: [
       {
         titulo: "No own presence on social media",
         descripcion:
           "No Instagram or Facebook account managed specifically by this business was found — only the generic brand/franchise account shows up.",
-        impacto: "High",
+        impacto: "Alto",
         categoria: "Presence",
         accionRecomendada: "Create a dedicated account and post real content from the business every week.",
         porQue: "Customers decide based on recent photos, not the brand's generic ones.",
