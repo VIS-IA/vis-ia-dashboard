@@ -1,9 +1,10 @@
-import { getDashboardData, getReputationDetail, getExperienceDetail, getClientPlan } from "@/lib/queries";
+import { getDashboardData, getReputationDetail, getExperienceDetail, getClientPlan, getClientLanguage } from "@/lib/queries";
 import type { DashboardMetric, ExperienceSignal } from "@/lib/types";
 import PanelLayout from "@/components/PanelLayout";
 import LockedPreview from "@/components/LockedPreview";
 import { planAtLeast } from "@/lib/plan";
 import { ICON_MAP } from "@/lib/icons";
+import { getDictionary, type Language } from "@/lib/i18n";
 import { ArrowUp, ArrowDown, TrendingUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ function ChangeRow({
   previous,
   currentSuffix = "",
   previousSuffix = "",
+  language,
 }: {
   label: string;
   current: number | string;
@@ -23,7 +25,9 @@ function ChangeRow({
   previous: number | string | null;
   currentSuffix?: string;
   previousSuffix?: string;
+  language: Language;
 }) {
+  const common = getDictionary(language).common;
   const curNum = typeof current === "number" ? current : parseFloat(String(current));
   const prevNum =
     previous === null
@@ -41,7 +45,7 @@ function ChangeRow({
       <span className="text-sm text-slate-600">{label}</span>
       <div className="flex items-center gap-3">
         <span className="text-xs text-slate-400">
-          {previous === null ? "Primer reporte" : `Antes: ${previous}${previousSuffix}`}
+          {previous === null ? common.firstReport : `${common.before}: ${previous}${previousSuffix}`}
         </span>
         <span className="text-sm font-semibold text-slate-900">
           {current}
@@ -64,38 +68,37 @@ function ChangeRow({
 }
 
 export default async function ComparacionPage() {
-  const [data, reputation, experience, plan] = await Promise.all([
+  const [data, reputation, experience, plan, language] = await Promise.all([
     getDashboardData(),
     getReputationDetail(),
     getExperienceDetail(),
     getClientPlan(),
+    getClientLanguage(),
   ]);
+  const t = getDictionary(language).comparacion;
 
   if (!planAtLeast(plan, "pro")) {
     return (
-      <PanelLayout
-        title="Comparación Completa"
-        subtitle="Antes y después de tu negocio, reporte a reporte"
-      >
-        <LockedPreview feature="La comparación completa" minPlan="pro">
+      <PanelLayout title={t.title} subtitle={t.subtitle}>
+        <LockedPreview feature={t.title} minPlan="pro" language={language}>
           <div className="space-y-6 max-w-2xl">
             <div className="bg-white rounded-xl border border-slate-200 p-5">
               <h3 className="text-sm font-semibold text-blue-600 mb-1 flex items-center gap-2">
                 <TrendingUp size={15} /> VIS Score
               </h3>
-              <ChangeRow label="Puntaje general" current={71} previous={58} currentSuffix="/100" previousSuffix="/100" />
+              <ChangeRow label={t.overallScore} current={71} previous={58} currentSuffix="/100" previousSuffix="/100" language={language} />
             </div>
 
             <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <h3 className="text-sm font-semibold text-slate-800 mb-1">Métricas de actividad</h3>
-              <ChangeRow label="Reseñas totales" current={214} previous={178} />
-              <ChangeRow label="Tráfico perfil Google" current={1580} previous={1240} />
+              <h3 className="text-sm font-semibold text-slate-800 mb-1">{t.activityMetrics}</h3>
+              <ChangeRow label={t.totalReviews} current={214} previous={178} language={language} />
+              <ChangeRow label={t.webTrafficGoogle} current={1580} previous={1240} language={language} />
             </div>
 
             <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <h3 className="text-sm font-semibold text-amber-600 mb-1">Reputación</h3>
-              <ChangeRow label="Calificación promedio" current="4.3" previous="3.9" />
-              <ChangeRow label="Reseñas totales" current={214} previous={178} />
+              <h3 className="text-sm font-semibold text-amber-600 mb-1">{t.reputation}</h3>
+              <ChangeRow label={t.averageRating} current="4.3" previous="3.9" language={language} />
+              <ChangeRow label={t.totalReviews} current={214} previous={178} language={language} />
             </div>
           </div>
         </LockedPreview>
@@ -105,19 +108,14 @@ export default async function ComparacionPage() {
 
   if (!data) {
     return (
-      <PanelLayout title="Comparación Completa">
-        <p className="text-sm text-slate-500">
-          Aún no hay un análisis disponible para tu negocio.
-        </p>
+      <PanelLayout title={t.title}>
+        <p className="text-sm text-slate-500">{t.noAnalysis}</p>
       </PanelLayout>
     );
   }
 
   return (
-    <PanelLayout
-      title="Comparación Completa"
-      subtitle={`Tu negocio: antes vs. ahora — comparado con el análisis previo a ${data.lastAnalysis}`}
-    >
+    <PanelLayout title={t.title} subtitle={t.subtitleWithDate(data.lastAnalysis)}>
       <div className="space-y-6 max-w-2xl">
         {/* VIS Score */}
         {data.visScore.current !== null && (
@@ -126,11 +124,12 @@ export default async function ComparacionPage() {
               <TrendingUp size={15} /> VIS Score
             </h3>
             <ChangeRow
-              label="Puntaje general"
+              label={t.overallScore}
               current={data.visScore.current}
               previous={data.visScore.previous}
               currentSuffix="/100"
               previousSuffix="/100"
+              language={language}
             />
           </div>
         )}
@@ -138,7 +137,7 @@ export default async function ComparacionPage() {
         {/* Metrics */}
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <h3 className="text-sm font-semibold text-slate-800 mb-1">
-            Métricas de actividad
+            {t.activityMetrics}
           </h3>
           {data.metrics.map((m: DashboardMetric, idx: number) => {
             const Icon = ICON_MAP[m.icon_key] ?? TrendingUp;
@@ -169,21 +168,23 @@ export default async function ComparacionPage() {
         {reputation && (
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <h3 className="text-sm font-semibold text-amber-600 mb-1">
-              Reputación
+              {t.reputation}
             </h3>
             <ChangeRow
-              label="Calificación promedio"
+              label={t.averageRating}
               current={reputation.avgRating.toFixed(1)}
               previous={
                 reputation.avgRatingPrevious !== null
                   ? reputation.avgRatingPrevious.toFixed(1)
                   : null
               }
+              language={language}
             />
             <ChangeRow
-              label="Reseñas totales"
+              label={t.totalReviews}
               current={reputation.totalReviews}
               previous={reputation.totalReviewsPrevious}
+              language={language}
             />
           </div>
         )}
@@ -192,7 +193,7 @@ export default async function ComparacionPage() {
         {experience && experience.signals.length > 0 && (
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <h3 className="text-sm font-semibold text-purple-600 mb-3">
-              Experiencia del Cliente
+              {t.customerExperience}
             </h3>
             <div className="space-y-2">
               {experience.signals.map((s: ExperienceSignal, idx: number) => (
@@ -207,16 +208,13 @@ export default async function ComparacionPage() {
                     {s.sourceType === "platform_score" && s.platformScore !== null
                       ? `${s.platformScore.toFixed(1)}/${s.platformScoreScale ?? 10}`
                       : s.positiveMentions !== null
-                      ? `${s.positiveMentions} positivas / ${s.negativeMentions ?? 0} negativas`
+                      ? t.positiveNegative(s.positiveMentions, s.negativeMentions ?? 0)
                       : "—"}
                   </span>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-slate-400 mt-3">
-              Comparación detallada disponible próximamente — por ahora se
-              muestra el estado actual de cada señal.
-            </p>
+            <p className="text-xs text-slate-400 mt-3">{t.comparisonComingSoon}</p>
           </div>
         )}
       </div>
