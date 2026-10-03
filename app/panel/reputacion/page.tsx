@@ -185,7 +185,7 @@ export default async function ReputacionPage() {
             <div className="flex items-center gap-2 mb-3">
               <span className="w-2 h-2 rounded-full bg-blue-500" />
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Response Management
+                Gestión de Respuestas
               </p>
             </div>
 
