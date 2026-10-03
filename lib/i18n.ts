@@ -606,7 +606,7 @@ const es: Dictionary = {
     negative: "Negativas",
     unrespondedNegative: (n) => `${n} reseñas negativas sin responder`,
     checkActionPlan: "Revisa el Plan de Acción para priorizar esto",
-    responseManagement: "Response Management",
+    responseManagement: "Gestión de Respuestas",
     frictionResponseManagement: (prevRate, rate) =>
       `la tasa de respuesta cayó de ${prevRate}% a ${rate}% frente al reporte anterior. Esto suele indicar un cambio operativo (menos personal, cambio de dueño, o descuido) que vale la pena investigar antes de que afecte más la reputación.`,
     responded: "Respondidas",
