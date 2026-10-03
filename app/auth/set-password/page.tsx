@@ -114,14 +114,30 @@ export default function SetPasswordPage() {
     setSaving(true);
     const supabase = createClient();
     const { error: updateError } = await supabase.auth.updateUser({ password });
-    setSaving(false);
 
     if (updateError) {
-      setError(
-        "No se pudo guardar tu contraseña — tu enlace puede haber vencido. Pide uno nuevo a VIS IA."
-      );
+      // El enlace ya se había verificado bien antes (por eso llegamos a
+      // este formulario) — si updateUser falla, el "enlace vencido" ya no
+      // es la causa real la mayoría de las veces. Solo seguimos culpando
+      // al enlace cuando de verdad ya no hay sesión activa; si la sesión
+      // sigue ahí, el problema fue otra cosa (red, la contraseña no pasó
+      // alguna regla de Supabase, etc.) y decirle "pide uno nuevo" solo
+      // confunde — lo correcto ahí es que intente de nuevo.
+      const { data: sessionData } = await supabase.auth.getSession();
+      setSaving(false);
+
+      if (!sessionData.session) {
+        setError(
+          "No se pudo guardar tu contraseña — tu sesión expiró. Pide a VIS IA que te envíe un enlace nuevo."
+        );
+      } else {
+        setError(
+          "No se pudo guardar tu contraseña. Intenta de nuevo — si el problema sigue, contacta a VIS IA."
+        );
+      }
       return;
     }
+    setSaving(false);
 
     router.push("/panel");
   }
