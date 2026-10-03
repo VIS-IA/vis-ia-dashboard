@@ -1,20 +1,21 @@
-import { getOnboardingQuestions, getOnboardingStatus } from "@/lib/queries";
+import { getOnboardingQuestions, getOnboardingStatus, getClientLanguage } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import OnboardingForm from "@/components/OnboardingForm";
+import { getDictionary, type Dictionary } from "@/lib/i18n";
 import { CheckCircle2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-function formatAnswer(answer: any): string {
+function formatAnswer(answer: any, t: Dictionary["preguntas"]): string {
   if (!answer) return "—";
   if (answer.antes !== undefined) {
     const parts = [
-      answer.antes && `Antes: ${answer.antes}`,
-      answer.durante && `Durante: ${answer.durante}`,
-      answer.despues && `Después: ${answer.despues}`,
-      answer.cuantificacion && `Cuantificación: ${answer.cuantificacion}`,
-      answer.monto && `Monto: ${answer.monto}`,
-      answer.calculo && `Cálculo: ${answer.calculo}`,
+      answer.antes && `${t.before}: ${answer.antes}`,
+      answer.durante && `${t.during}: ${answer.durante}`,
+      answer.despues && `${t.after}: ${answer.despues}`,
+      answer.cuantificacion && `${t.quantification}: ${answer.cuantificacion}`,
+      answer.monto && `${t.amount}: ${answer.monto}`,
+      answer.calculo && `${t.calculation}: ${answer.calculo}`,
     ].filter(Boolean);
     return parts.join(" · ") || "—";
   }
@@ -28,33 +29,27 @@ function formatAnswer(answer: any): string {
 }
 
 export default async function PreguntasPage() {
-  const [questions, status] = await Promise.all([
+  const [questions, status, language] = await Promise.all([
     getOnboardingQuestions(),
     getOnboardingStatus(),
+    getClientLanguage(),
   ]);
+  const t = getDictionary(language).preguntas;
 
   if (questions.length === 0) {
     return (
-      <PanelLayout title="15 Preguntas">
-        <p className="text-sm text-slate-500">
-          El cuestionario aún no está configurado. Vuelve más tarde.
-        </p>
+      <PanelLayout title={t.title}>
+        <p className="text-sm text-slate-500">{t.emptyConfig}</p>
       </PanelLayout>
     );
   }
 
   if (status.completed) {
     return (
-      <PanelLayout
-        title="15 Preguntas"
-        subtitle="Ya respondiste este cuestionario — gracias"
-      >
+      <PanelLayout title={t.title} subtitle={t.alreadyAnsweredSubtitle}>
         <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-3 max-w-2xl mb-6">
           <CheckCircle2 className="text-emerald-600 shrink-0" size={20} />
-          <p className="text-sm text-emerald-800">
-            Tus respuestas ya fueron recibidas y VIS IA las está usando como
-            contexto para tu análisis.
-          </p>
+          <p className="text-sm text-emerald-800">{t.alreadyAnsweredBanner}</p>
         </div>
         <div className="space-y-3 max-w-2xl">
           {questions.map((q, idx) => (
@@ -66,7 +61,7 @@ export default async function PreguntasPage() {
                 {idx + 1}. {q.questionText}
               </p>
               <p className="text-sm text-slate-500">
-                {formatAnswer(status.answers[q.questionKey])}
+                {formatAnswer(status.answers[q.questionKey], t)}
               </p>
             </div>
           ))}
@@ -76,10 +71,7 @@ export default async function PreguntasPage() {
   }
 
   return (
-    <PanelLayout
-      title="15 Preguntas"
-      subtitle="Información interna de tu negocio que solo tú conoces — nos ayuda a comparar lo que percibes contra lo que la evidencia muestra"
-    >
+    <PanelLayout title={t.title} subtitle={t.subtitle}>
       <OnboardingForm questions={questions} />
     </PanelLayout>
   );
