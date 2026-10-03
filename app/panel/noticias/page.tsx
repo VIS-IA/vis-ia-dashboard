@@ -1,7 +1,8 @@
-import { getNewsMentionsDetail, getClientPlan } from "@/lib/queries";
+import { getNewsMentionsDetail, getClientPlan, getClientLanguage } from "@/lib/queries";
 import PanelLayout from "@/components/PanelLayout";
 import LockedPreview from "@/components/LockedPreview";
 import { planAtLeast } from "@/lib/plan";
+import { getDictionary } from "@/lib/i18n";
 import { Newspaper, ExternalLink, BadgeCheck, ThumbsUp, Minus, ThumbsDown } from "lucide-react";
 import type { NewsMention } from "@/lib/types";
 
@@ -13,7 +14,7 @@ const TONE_STYLES: Record<string, { bg: string; text: string; icon: typeof Thumb
   Negativo: { bg: "bg-red-50", text: "text-red-600", icon: ThumbsDown },
 };
 
-function MentionCard({ mention }: { mention: NewsMention }) {
+function MentionCard({ mention, t }: { mention: NewsMention; t: ReturnType<typeof getDictionary>["noticias"] }) {
   const tone = TONE_STYLES[mention.tono] ?? TONE_STYLES.Neutral;
   const ToneIcon = tone.icon;
   return (
@@ -40,37 +41,25 @@ function MentionCard({ mention }: { mention: NewsMention }) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 mt-3"
         >
-          Ver fuente <ExternalLink size={11} />
+          {t.seeSource} <ExternalLink size={11} />
         </a>
       )}
     </div>
   );
 }
 
-const SAMPLE_MENTIONS: NewsMention[] = [
-  {
-    titulo: "Negocio local destacado en directorio de la cámara de comercio",
-    fuente: "Cámara de Comercio local",
-    url: null,
-    fechaLabel: "Hace 4 meses",
-    resumen: "Mención breve en un listado de negocios recomendados de la zona.",
-    tono: "Positivo",
-  },
-];
-
 export default async function NoticiasPage() {
-  const plan = await getClientPlan();
+  const [plan, language] = await Promise.all([getClientPlan(), getClientLanguage()]);
+  const t = getDictionary(language).noticias;
+  const sampleMentions: NewsMention[] = [{ ...t.sampleMention, url: null, tono: "Positivo" }];
 
   if (!planAtLeast(plan, "pro")) {
     return (
-      <PanelLayout
-        title="Noticias y Menciones"
-        subtitle="Qué se dice de tu negocio fuera de tus propios canales — medios, blogs y directorios"
-      >
-        <LockedPreview feature="Noticias y Menciones" minPlan="pro">
+      <PanelLayout title={t.title} subtitle={t.subtitle}>
+        <LockedPreview feature={t.title} minPlan="pro" language={language}>
           <div className="space-y-4 max-w-2xl">
-            {SAMPLE_MENTIONS.map((m, idx) => (
-              <MentionCard key={idx} mention={m} />
+            {sampleMentions.map((m, idx) => (
+              <MentionCard key={idx} mention={m} t={t} />
             ))}
           </div>
         </LockedPreview>
@@ -82,15 +71,11 @@ export default async function NoticiasPage() {
 
   if (!detail) {
     return (
-      <PanelLayout title="Noticias y Menciones">
+      <PanelLayout title={t.title}>
         <div className="bg-white rounded-xl border border-slate-200 p-8 max-w-lg text-center">
           <Newspaper className="text-blue-400 mx-auto mb-3" size={28} />
-          <p className="text-sm font-medium text-slate-800">
-            Aún no hay un análisis de noticias y menciones cargado
-          </p>
-          <p className="text-sm text-slate-500 mt-1">
-            Cuando VIS IA publique este detalle, aparecerá aquí.
-          </p>
+          <p className="text-sm font-medium text-slate-800">{t.emptyTitle}</p>
+          <p className="text-sm text-slate-500 mt-1">{t.emptyBody}</p>
         </div>
       </PanelLayout>
     );
@@ -99,16 +84,13 @@ export default async function NoticiasPage() {
   const { overallAssessment, mentions } = detail;
 
   return (
-    <PanelLayout
-      title="Noticias y Menciones"
-      subtitle="Qué se dice de tu negocio fuera de tus propios canales — medios, blogs y directorios"
-    >
+    <PanelLayout title={t.title} subtitle={t.subtitle}>
       <div className="max-w-2xl space-y-6">
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 flex gap-3">
           <BadgeCheck size={18} className="text-blue-600 shrink-0 mt-0.5" />
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 mb-1">
-              Evaluación general
+              {t.overallAssessment}
             </p>
             <p className="text-sm text-blue-900">{overallAssessment}</p>
           </div>
@@ -117,7 +99,7 @@ export default async function NoticiasPage() {
         {mentions.length > 0 ? (
           <div className="space-y-4">
             {mentions.map((m, idx) => (
-              <MentionCard key={idx} mention={m} />
+              <MentionCard key={idx} mention={m} t={t} />
             ))}
           </div>
         ) : (
@@ -125,10 +107,7 @@ export default async function NoticiasPage() {
             <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
               <Newspaper size={16} className="text-slate-400" />
             </div>
-            <p className="text-sm text-slate-700">
-              No se encontró ninguna mención de este negocio en medios, blogs o directorios
-              fuera de las páginas estándar de reservas/reseñas.
-            </p>
+            <p className="text-sm text-slate-700">{t.noMentionsFound}</p>
           </div>
         )}
       </div>
